@@ -15,13 +15,19 @@ convert(jsonObj)
 def convert(jsonObj) {
     switch(jsonObj) {
         case List:
-            return jsonObj.inject([]) { l, elem -> l << convert(elem) }
+            return jsonObj.inject([]) { l, elem -> l << convert(elem); l }
         case Map:
-            return jsonObj.inject([:]) { m, entry -> m[entry.key] = convert(entry.value) }
+            return jsonObj.inject([:]) { m, entry -> m[entry.key] = convert(entry.value); m }
         default:
            return jsonObj
     }
 }
+
+[a:1,b:2].inject([:]) { m, e -> println e; m[e.key] = e.value * 2; m }
+
+'a=10&b=2&c=df'.split('&').inject([:]) { m,v -> def s = v.split('='); m[s[0]] = s[1]; m }
+
+
     
 
 //JSONSerializer.toJava(JSONObject.fromObject('''{"responseIndex":1,"responseDetails":{"responseText":"Current Time: Thu Dec 16 03:57:39 PST 2010"}}'''))

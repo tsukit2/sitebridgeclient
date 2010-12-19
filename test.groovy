@@ -5,14 +5,15 @@ import static groovyx.net.http.ContentType.*
 import static groovyx.net.http.Method.*
 
 //def http = new HTTPBuilder( 'http://sitebridgeserver.appspot.com' )
-def http = new HTTPBuilder( 'http://localhost:8080' )
+http = new HTTPBuilder( 'http://www.paulgraham.com' )
 
 
-http.request(GET,JSON) { req ->
-  uri.path = '/bridgeconsole/query'
+http.request(GET) { req ->
+  //uri.path = '/articles.html'
   
-  response.success = { resp, json ->
-     System.out << json.requestIndex
+  response.success = { resp ->
+     println resp.entity.content.getClass()
+     System.out << resp.entity.content.text
   }
 }
 

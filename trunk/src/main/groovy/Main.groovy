@@ -16,16 +16,18 @@ import org.apache.http.client.RedirectHandler
 // here is the main logic of the client and that's it
 reset()
 while(true) {
-   // query for the request. this could be null
-   def request = query(); 
+   // query for the requests. this return list of requests which could be empty
+   def requests = query(); 
 
    // if request found, satisfy it
-   if (request) {
-      Thread.start {
-         println request
-         def response = fetchResponse(request)
-         println "${response.status}\n${response.headers}"
-         satisfy([responseIndex:request.requestIndex, responseDetails:response])
+   if (requests) {
+      requests.each { request ->
+         Thread.start {
+            println request
+            def response = fetchResponse(request)
+            println "${response.status}\n${response.headers}"
+            satisfy([responseIndex:request.requestIndex, responseDetails:response])
+         }
       }
    } else {
       // wait a little bit if no request is found
@@ -45,7 +47,7 @@ def connectToServer(closure) {
 }
 
 def connectToEndPoint(closure) {
-   def endpoint = new HTTPBuilder('http://www.boost.org')
+   def endpoint = new HTTPBuilder('http://en.wikipedia.org')
    endpoint.client.redirectHandler = [isRedirectRequested: { resp, ctx -> false }] as RedirectHandler
    try {
       closure(endpoint)
@@ -79,10 +81,10 @@ def query() {
 
          response.success = { resp, json ->
             //print ".... ${json.request.getClass()} - ${json}...."
-            if (!(json.request instanceof JSONNull)) {
-               def requestObj = convertToMapAndArray(json.request)
-               println "found request ${requestObj.requestIndex}"
-               return requestObj
+            def requests = convertToMapAndArray(json)
+            if (requests) {
+               println "found ${requests.size()} request(s)"
+               return requests
             }
             println 'no pending request'
          }
@@ -151,22 +153,25 @@ def fetchResponse(request) {
             println 'Ok'
             // prepare the body bytes to send. Rezip it if need to
             def bytes = resp.entity.content.bytes
-            println "***** ${bytes.size()}"
-            /*
-            if (resp.headers.'Content-Encoding'?.toLowerCase()?.contains('gzip')) {
+            def bytesCount = bytes.size()
+            
+            // compress the bytes to speed up transmission
+            if (bytes) {
                def bytearray = new ByteArrayOutputStream()
                def zip = new GZIPOutputStream(bytearray)
                zip << bytes
                zip.finish()
                bytes = bytearray.toByteArray()
-            }*/
+            }
+
+            println "***** ${bytesCount} / ${bytes.size()}"
             
             // finally return the result
             return [status:resp.status,
                     headers:resp.headers.inject([:]) { m,h -> 
                        def val = h.value
-                       if (h.name == 'Content-Length' && (val as long) != bytes.size()) {
-                          val = bytes.size().toString()
+                       if (h.name == 'Content-Length' && (val as long) != bytesCount) {
+                          val = bytesCount.toString()
                        }
                        m[h.name] = val;
                        return m 

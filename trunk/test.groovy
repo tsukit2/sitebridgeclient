@@ -5,15 +5,23 @@ import static groovyx.net.http.ContentType.*
 import static groovyx.net.http.Method.*
 
 //def http = new HTTPBuilder( 'http://sitebridgeserver.appspot.com' )
-http = new HTTPBuilder( 'http://www.paulgraham.com' )
+http = new HTTPBuilder( 'http://www.boost.org' )
 
 
 http.request(GET) { req ->
   //uri.path = '/articles.html'
   
+  headers.clear()
+  
   response.success = { resp ->
-     println resp.entity.content.getClass()
-     System.out << resp.entity.content.text
+     //println resp.entity.content.getClass()
+     System.out << resp.allHeaders.inject([:]) { m,h -> 
+                       if (h.name != 'Content-Encoding') {
+                          m[h.name] = h.value;
+                       } 
+                       return m 
+                    }
+     System.out << resp.entity.content.bytes.size()
   }
 }
 

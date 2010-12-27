@@ -47,7 +47,8 @@ def connectToServer(closure) {
 }
 
 def connectToEndPoint(closure) {
-   def endpoint = new HTTPBuilder('http://en.wikipedia.org')
+   //def endpoint = new HTTPBuilder('http://en.wikipedia.org')
+   def endpoint = new HTTPBuilder('http://www.paulgraham.com')
    endpoint.client.redirectHandler = [isRedirectRequested: { resp, ctx -> false }] as RedirectHandler
    try {
       closure(endpoint)

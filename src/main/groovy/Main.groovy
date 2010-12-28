@@ -1,5 +1,5 @@
-@Grab(group='org.codehaus.groovy.modules.http-builder', module='http-builder', version='0.5.0-RC2' )
-@Grab(group='net.sf.json-lib', module='json-lib', version='2.3', classifier='jdk15' )
+//@Grab(group='org.codehaus.groovy.modules.http-builder', module='http-builder', version='0.5.0-RC2' )
+//@Grab(group='net.sf.json-lib', module='json-lib', version='2.3', classifier='jdk15' )
 
 import net.sf.json.*
 /*
@@ -13,9 +13,9 @@ import static groovyx.net.http.Method.*
 import java.util.zip.*
 import org.apache.http.client.RedirectHandler
 
-serverURL = 'http://localhost:8080'
-//serverURL = 'http://sitebridgeserver.appspot.com'
-endpointURL = args.size() ? args[0] : 'http://www.paulgraham.com'
+//serverURL = 'http://localhost:8080'
+serverURL = 'http://sitebridgeserver.appspot.com'
+endpointURL = args.size() ? args[0] : 'http://www.boost.org'
 
 // here is the main logic of the client and that's it
 reset()
@@ -26,12 +26,12 @@ while(true) {
    // if request found, satisfy it
    if (requests) {
       requests.each { request ->
-         //Thread.start {
+         Thread.start {
             println request
             def response = fetchResponse(request)
             println "${response.status}\n${response.headers}"
             satisfy([responseIndex:request.requestIndex, responseDetails:response])
-         //}
+         }
       }
    } else {
       // wait a little bit if no request is found
@@ -71,7 +71,7 @@ def connectToEndPoint(closure) {
 
 def reset() {
    print "Resetting server...."
-   20.downto(0) { count ->
+   1.downto(0) { count ->
       connectToServer { http ->
          http.request(GET,HTTPJSON) { req ->
             uri.path = '/bridgeconsole/reset'
@@ -97,7 +97,8 @@ def query() {
 
          response.success = { resp, json ->
             //print ".... ${json.request.getClass()} - ${json}...."
-            def requests = convertToMapAndArray(json)
+            def requests = convertToMapAndArray(
+               JSONArray.fromObject(inflateByteArrayToObj(convertToMapAndArray(json.payload) as byte[])))
             if (requests) {
                println "found ${requests.size()} request(s)"
                return requests
@@ -113,7 +114,8 @@ def satisfy(responseObj) {
    connectToServer { http ->
       http.request(POST,HTTPJSON) { req ->
          uri.path = '/bridgeconsole/satisfy'
-         body = responseObj
+         body = [payload:deflateObjectToByteArray(
+                           JSONObject.fromObject(responseObj).toString())]
 
          response.success = { resp, json ->
             if (!json.satisfied) {
@@ -124,6 +126,20 @@ def satisfy(responseObj) {
          }
       }
    }
+}
+
+private deflateObjectToByteArray(obj) {
+   def bytes = new ByteArrayOutputStream()
+   def outstream = new ObjectOutputStream(new GZIPOutputStream(bytes))
+   outstream.writeObject(obj)
+   outstream.close()
+   bytes.toByteArray()
+}
+
+private inflateByteArrayToObj(bytearray) {
+   return new ObjectInputStream(
+      new GZIPInputStream(new ByteArrayInputStream(bytearray))).readObject()
+
 }
 
 // utility method to convert json object to map and array
@@ -166,28 +182,14 @@ def fetchResponse(request) {
             
          // create response handler closure and configure for both success and failure
          def responseHandler = { resp ->
-            println 'Ok'
-            // prepare the body bytes to send. Rezip it if need to
-            def bytes = resp.entity.content.bytes
-            def bytesCount = bytes.size()
-            
-            // compress the bytes to speed up transmission
-            if (bytes) {
-               def bytearray = new ByteArrayOutputStream()
-               def zip = new GZIPOutputStream(bytearray)
-               zip << bytes
-               zip.finish()
-               bytes = bytearray.toByteArray()
-            }
-
-            println "***** ${bytesCount} / ${bytes.size()}"
-            
             // finally return the result
+            println 'Ok'
+            def bytes = resp.entity.content.bytes
             return [status:resp.status,
                     headers:resp.headers.inject([:]) { m,h -> 
                        def val = h.value
-                       if (h.name == 'Content-Length' && (val as long) != bytesCount) {
-                          val = bytesCount.toString()
+                       if (h.name == 'Content-Length' && (val as long) != bytes.size()) {
+                          val = bytes.size().toString()
                        }
                        m[h.name] = val;
                        return m 

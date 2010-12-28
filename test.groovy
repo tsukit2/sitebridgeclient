@@ -6,7 +6,9 @@ import static groovyx.net.http.Method.*
 
 //def http = new HTTPBuilder( 'http://sitebridgeserver.appspot.com' )
 http = new HTTPBuilder( 'http://www.boost.org' )
-
+http.setProxy(System.properties.'http.proxyHost', 
+   System.properties.'http.proxyPort' as int, 
+   'http')
 
 http.request(GET) { req ->
   //uri.path = '/articles.html'
@@ -21,7 +23,7 @@ http.request(GET) { req ->
                        } 
                        return m 
                     }
-     System.out << resp.entity.content.bytes.size()
+     System.out << resp.entity.content.text
   }
 }
 

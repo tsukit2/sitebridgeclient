@@ -13,6 +13,10 @@ import static groovyx.net.http.Method.*
 import java.util.zip.*
 import org.apache.http.client.RedirectHandler
 
+serverURL = 'http://localhost:8080'
+//serverURL = 'http://sitebridgeserver.appspot.com'
+endpointURL = args.size() ? args[0] : 'http://www.paulgraham.com'
+
 // here is the main logic of the client and that's it
 reset()
 while(true) {
@@ -22,12 +26,12 @@ while(true) {
    // if request found, satisfy it
    if (requests) {
       requests.each { request ->
-         Thread.start {
+         //Thread.start {
             println request
             def response = fetchResponse(request)
             println "${response.status}\n${response.headers}"
             satisfy([responseIndex:request.requestIndex, responseDetails:response])
-         }
+         //}
       }
    } else {
       // wait a little bit if no request is found
@@ -35,10 +39,19 @@ while(true) {
    }
 }
 
+def createHTTPBuilder(url) {
+   def http = new HTTPBuilder(url)
+   if (!(url =~ /localhost/) && System.properties.'http.proxyHost') {
+      http.setProxy(System.properties.'http.proxyHost', 
+                    System.properties.'http.proxyPort' as int, 
+                    'http')
+   }
+   return http
+}
+
 def connectToServer(closure) {
    // define where is the server
-   //def http = new HTTPBuilder('http://localhost:8080')
-   def http = new HTTPBuilder('http://sitebridgeserver.appspot.com')
+   def http = createHTTPBuilder(serverURL)
    try {
       closure(http)
    } finally {
@@ -47,8 +60,7 @@ def connectToServer(closure) {
 }
 
 def connectToEndPoint(closure) {
-   //def endpoint = new HTTPBuilder('http://en.wikipedia.org')
-   def endpoint = new HTTPBuilder('http://www.paulgraham.com')
+   def endpoint = createHTTPBuilder(endpointURL)
    endpoint.client.redirectHandler = [isRedirectRequested: { resp, ctx -> false }] as RedirectHandler
    try {
       closure(endpoint)
@@ -59,19 +71,22 @@ def connectToEndPoint(closure) {
 
 def reset() {
    print "Resetting server...."
-   connectToServer { http ->
-      http.request(GET,HTTPJSON) { req ->
-         uri.path = '/bridgeconsole/reset'
+   20.downto(0) { count ->
+      connectToServer { http ->
+         http.request(GET,HTTPJSON) { req ->
+            uri.path = '/bridgeconsole/reset'
 
-         response.success = { resp, json ->
-            if (!json.status) {
-               println 'failed'
-               throw new RuntimeException("server reset failed: " + json.status)
+            response.success = { resp, json ->
+               if (!json.status) {
+                  println 'failed'
+                  throw new RuntimeException("server reset failed: " + json.status)
+               }
+               print "...${count}"
             }
-            println 'succeeded'
          }
-      }
-   } 
+      } 
+   }
+   println '...succeeded'
 }
 
 def query() {
@@ -185,4 +200,3 @@ def fetchResponse(request) {
       }
    }
 }
-

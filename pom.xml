@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    Generated from archetype; please customize.
+Generated from archetype; please customize.
 -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
+   <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.eddy</groupId>
-    <artifactId>sitebridgeclient</artifactId>
-    <name>Site Bridge Client</name>
-    <version>1.0</version>
+   <groupId>com.eddy</groupId>
+   <artifactId>sitebridgeclient</artifactId>
+   <name>Site Bridge Client</name>
+   <version>1.0</version>
 
-    <packaging>jar</packaging>
+   <packaging>jar</packaging>
 
-    <dependencies>
-        <!--
-        <dependency>
-            <groupId>org.codehaus.gmaven.runtime</groupId>
-            <artifactId>gmaven-runtime-1.6</artifactId>
-            <version>1.2</version>
-        </dependency>
-        -->
+   <dependencies>
+      <!--
+      <dependency>
+         <groupId>org.codehaus.gmaven.runtime</groupId>
+         <artifactId>gmaven-runtime-1.6</artifactId>
+         <version>1.2</version>
+      </dependency>
+      -->
 
       <dependency>
-        <groupId>org.codehaus.groovy</groupId>
-        <artifactId>groovy-all</artifactId>
-        <version>1.7.5</version>
+         <groupId>org.codehaus.groovy</groupId>
+         <artifactId>groovy-all</artifactId>
+         <version>1.7.5</version>
       </dependency>
       <dependency>
          <groupId>org.codehaus.groovy.modules.http-builder</groupId>
@@ -45,102 +45,102 @@
          <version>3.8.1</version>
          <scope>test</scope>
       </dependency>
-    </dependencies>
+   </dependencies>
 
-    <build>
-        <plugins>
-            <!--
-            <plugin>
-                <groupId>org.codehaus.gmaven</groupId>
-                <artifactId>gmaven-plugin</artifactId>
-                <version>1.2</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>generateStubs</goal>
-                            <goal>compile</goal>
-                            <goal>generateTestStubs</goal>
-                            <goal>testCompile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            -->
-           <plugin>
-             <groupId>org.codehaus.gmaven</groupId>
-             <artifactId>gmaven-plugin</artifactId>
-             <version>1.2</version>
-             <configuration>
-               <providerSelection>1.7</providerSelection>
-             </configuration>
-             <executions>
+   <build>
+      <plugins>
+         <!--
+         <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <version>1.2</version>
+            <executions>
                <execution>
-                 <goals>
-                   <goal>generateStubs</goal>
-                   <goal>compile</goal>
-                   <goal>generateTestStubs</goal>
-                   <goal>testCompile</goal>
-                 </goals>
+                  <goals>
+                     <goal>generateStubs</goal>
+                     <goal>compile</goal>
+                     <goal>generateTestStubs</goal>
+                     <goal>testCompile</goal>
+                  </goals>
                </execution>
-             </executions>
-             <dependencies>
-               <dependency>
-                 <groupId>org.codehaus.gmaven.runtime</groupId>
-                 <artifactId>gmaven-runtime-1.7</artifactId>
-                 <version>1.2</version>
-                 <exclusions>
-                   <exclusion>
-                     <groupId>org.codehaus.groovy</groupId>
-                     <artifactId>groovy-all</artifactId>
-                   </exclusion>
-                 </exclusions>
-               </dependency>
-               <dependency>
-                 <groupId>org.codehaus.groovy</groupId>
-                 <artifactId>groovy-all</artifactId>
-                 <version>1.7.5</version>
-               </dependency>
-             </dependencies>
-           </plugin>
-           <plugin>
-             <artifactId>maven-assembly-plugin</artifactId>
-             <version>2.2</version>
+            </executions>
+         </plugin>
+         -->
+         <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <version>1.2</version>
             <configuration>
-              <descriptorRefs>
-                <descriptorRef>jar-with-dependencies</descriptorRef>
-              </descriptorRefs>
+               <providerSelection>1.7</providerSelection>
+            </configuration>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>generateStubs</goal>
+                     <goal>compile</goal>
+                     <goal>generateTestStubs</goal>
+                     <goal>testCompile</goal>
+                  </goals>
+               </execution>
+            </executions>
+            <dependencies>
+               <dependency>
+                  <groupId>org.codehaus.gmaven.runtime</groupId>
+                  <artifactId>gmaven-runtime-1.7</artifactId>
+                  <version>1.2</version>
+                  <exclusions>
+                     <exclusion>
+                        <groupId>org.codehaus.groovy</groupId>
+                        <artifactId>groovy-all</artifactId>
+                     </exclusion>
+                  </exclusions>
+               </dependency>
+               <dependency>
+                  <groupId>org.codehaus.groovy</groupId>
+                  <artifactId>groovy-all</artifactId>
+                  <version>1.7.5</version>
+               </dependency>
+            </dependencies>
+         </plugin>
+         <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>2.2</version>
+            <configuration>
+               <descriptorRefs>
+                  <descriptorRef>jar-with-dependencies</descriptorRef>
+               </descriptorRefs>
                <archive>
-                 <manifest>
-                   <mainClass>Main</mainClass>
-                 </manifest>
+                  <manifest>
+                     <mainClass>Main</mainClass>
+                  </manifest>
                </archive>
             </configuration>
             <executions>
-              <execution>
-                <id>make-assembly</id> <!-- this is used for inheritance merges -->
-                <phase>package</phase> <!-- append to the packaging phase. -->
-                <goals>
-                  <goal>single</goal> <!-- goals == mojos -->
-                </goals>
-              </execution>
+               <execution>
+                  <id>make-assembly</id> <!-- this is used for inheritance merges -->
+                  <phase>package</phase> <!-- append to the packaging phase. -->
+                  <goals>
+                     <goal>single</goal> <!-- goals == mojos -->
+                  </goals>
+               </execution>
             </executions>
-           </plugin>
-        </plugins>
-    </build>
-    <repositories>
-       <repository>
-          <id>Codehaus</id>
-          <url>http://repository.codehaus.org</url>
-       </repository>
-       <repository>
-          <id>mvnrepository.com</id>
-          <url>http://mvnrepository.com</url>
-       </repository>
-       <repository>
-          <id>Codehaus.Snapshots</id>
-          <url>http://snapshots.repository.codehaus.org</url>
-          <snapshots><enabled>true</enabled></snapshots>
-       </repository>
-    </repositories>
+         </plugin>
+      </plugins>
+   </build>
+   <repositories>
+      <repository>
+         <id>Codehaus</id>
+         <url>http://repository.codehaus.org</url>
+      </repository>
+      <repository>
+         <id>mvnrepository.com</id>
+         <url>http://mvnrepository.com</url>
+      </repository>
+      <repository>
+         <id>Codehaus.Snapshots</id>
+         <url>http://snapshots.repository.codehaus.org</url>
+         <snapshots><enabled>true</enabled></snapshots>
+      </repository>
+   </repositories>
 
 </project>

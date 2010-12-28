@@ -2,20 +2,19 @@
 //@Grab(group='net.sf.json-lib', module='json-lib', version='2.3', classifier='jdk15' )
 
 import net.sf.json.*
-/*
-import net.sf.json.groovy.*;
-*/
-
 import groovyx.net.http.*
 import static groovyx.net.http.ContentType.*
 import static groovyx.net.http.ContentType.JSON as HTTPJSON
 import static groovyx.net.http.Method.*
 import java.util.zip.*
 import org.apache.http.client.RedirectHandler
+import java.util.concurrent.*
 
 //serverURL = 'http://localhost:8080'
 serverURL = 'http://sitebridgeserver.appspot.com'
-endpointURL = args.size() ? args[0] : 'http://www.boost.org'
+endpointURL = args.size() ? args[0] : 'http://www.w3.org'
+
+def executor = Executors.newFixedThreadPool(40)
 
 // here is the main logic of the client and that's it
 reset()
@@ -25,14 +24,18 @@ while(true) {
 
    // if request found, satisfy it
    if (requests) {
-      requests.each { request ->
-         Thread.start {
+      // get responses asynchronously
+      def responses = requests.collect { request ->
+         executor.submit({
             println request
             def response = fetchResponse(request)
             println "${response.status}\n${response.headers}"
-            satisfy([responseIndex:request.requestIndex, responseDetails:response])
-         }
+            return [responseIndex:request.requestIndex, responseDetails:response]
+         } as Callable<Object>)
       }
+
+      // get all the results (wait for it) and satisfy it
+      satisfy(responses.collect { it.get() })
    } else {
       // wait a little bit if no request is found
       Thread.currentThread().sleep(1000) 
@@ -109,18 +112,18 @@ def query() {
    }
 }
 
-def satisfy(responseObj) {
-   print "Satisyfing: ${responseObj.responseIndex}...."
+def satisfy(responses) {
+   print "Satisyfing: ${responses*.responseIndex}...."
    connectToServer { http ->
       http.request(POST,HTTPJSON) { req ->
          uri.path = '/bridgeconsole/satisfy'
          body = [payload:deflateObjectToByteArray(
-                           JSONObject.fromObject(responseObj).toString())]
+                           JSONArray.fromObject(responses).toString())]
 
          response.success = { resp, json ->
             if (!json.satisfied) {
                println 'failed'
-               throw new RuntimeException("satisfied request ${responseObj.responseIndex} failed")
+               throw new RuntimeException("satisfied request ${responses*.responseIndex} failed")
             }
             println 'succeeded'
          }

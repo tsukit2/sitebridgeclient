@@ -1,4 +1,4 @@
-@Grab(group='org.codehaus.groovy.modules.http-builder', module='http-builder', version='0.5.0-RC2' )
+@Grab(group='org.codehaus.groovy.modules.http-builder', module='http-builder', version='0.5.1' )
 @Grab(group='net.sf.json-lib', module='json-lib', version='2.3', classifier='jdk15' )
 
 import net.sf.json.*
@@ -12,35 +12,42 @@ import java.util.concurrent.*
 
 //serverURL = 'http://localhost:8080'
 serverURL = 'http://sitebridgeserver.appspot.com'
-endpointURL = args.size() ? args[0] : 'http://www.boost.org'
+endpointURL = args.size() ? args[0] : 'http://www.w3.org'
 
 // thread pool to execute anything asynchronously
 executor = Executors.newFixedThreadPool(40)
 
-// here is the main logic of the client and that's it
-reset()
-3.times { warmup(40) }
-while(true) {
-   // query for the requests. this return list of requests which could be empty
-   def requests = query(); 
+try { 
+   doit()
+} finally {
+   executor.shutdown()
+}
 
-   // if request found, satisfy it
-   if (requests) {
-      // get responses asynchronously
-      def responses = requests.collect { request ->
-         executor.submit({
-            println request
-            def response = fetchResponse(request)
-            println "${response.status}\n${response.headers}"
-            return [responseIndex:request.requestIndex, responseDetails:response]
-         } as Callable<Object>)
+def doit() {
+   // here is the main logic of the client and that's it
+   reset()
+   while(true) {
+      // query for the requests. this return list of requests which could be empty
+      def requests = query(); 
+
+      // if request found, satisfy it
+      if (requests) {
+         // get responses asynchronously
+         def responses = requests.collect { request ->
+            executor.submit({
+               println request
+               def response = fetchResponse(request)
+               println "${response.status}\n${response.headers}"
+               return [responseIndex:request.requestIndex, responseDetails:response]
+            } as Callable<Object>)
+         }
+
+         // get all the results (wait for it) and satisfy it
+         satisfy(responses.collect { it.get() })
+      } else {
+         // wait a little bit if no request is found
+         Thread.currentThread().sleep(1000) 
       }
-
-      // get all the results (wait for it) and satisfy it
-      satisfy(responses.collect { it.get() })
-   } else {
-      // wait a little bit if no request is found
-      Thread.currentThread().sleep(1000) 
    }
 }
 
@@ -73,20 +80,6 @@ def connectToEndPoint(closure) {
       endpoint.shutdown()
    }
 }
-
-def warmup(times) {
-   print "Warming up server...."
-   def queue = (1..times).collect {
-      executor.submit({
-         connectToServer { http ->
-            http.request(GET) { req ->
-               uri.path = '/bridgeconsole/warmup'
-            }
-         }
-      } as Runnable)
-   }
-   queue.each { it.get() }
-}   
 
 def reset() {
    print "Resetting server...."

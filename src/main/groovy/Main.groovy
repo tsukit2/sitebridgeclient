@@ -1,5 +1,5 @@
-//@Grab(group='org.codehaus.groovy.modules.http-builder', module='http-builder', version='0.5.0-RC2' )
-//@Grab(group='net.sf.json-lib', module='json-lib', version='2.3', classifier='jdk15' )
+@Grab(group='org.codehaus.groovy.modules.http-builder', module='http-builder', version='0.5.0-RC2' )
+@Grab(group='net.sf.json-lib', module='json-lib', version='2.3', classifier='jdk15' )
 
 import net.sf.json.*
 import groovyx.net.http.*
@@ -12,12 +12,14 @@ import java.util.concurrent.*
 
 //serverURL = 'http://localhost:8080'
 serverURL = 'http://sitebridgeserver.appspot.com'
-endpointURL = args.size() ? args[0] : 'http://www.w3.org'
+endpointURL = args.size() ? args[0] : 'http://www.boost.org'
 
-def executor = Executors.newFixedThreadPool(40)
+// thread pool to execute anything asynchronously
+executor = Executors.newFixedThreadPool(40)
 
 // here is the main logic of the client and that's it
 reset()
+3.times { warmup(40) }
 while(true) {
    // query for the requests. this return list of requests which could be empty
    def requests = query(); 
@@ -71,6 +73,20 @@ def connectToEndPoint(closure) {
       endpoint.shutdown()
    }
 }
+
+def warmup(times) {
+   print "Warming up server...."
+   def queue = (1..times).collect {
+      executor.submit({
+         connectToServer { http ->
+            http.request(GET) { req ->
+               uri.path = '/bridgeconsole/warmup'
+            }
+         }
+      } as Runnable)
+   }
+   queue.each { it.get() }
+}   
 
 def reset() {
    print "Resetting server...."

@@ -10,9 +10,15 @@ import java.util.zip.*
 import org.apache.http.client.RedirectHandler
 import java.util.concurrent.*
 
-//serverURL = 'http://localhost:8080'
-serverURL = 'http://sitebridgeserver.appspot.com'
-endpointURL = args.size() ? args[0] : 'http://www.oracle.com'
+serverURL = 'http://localhost:8080'
+//serverURL = 'http://sitebridgeserver.appspot.com'
+endpointURL = args.size() ? args[0] : 'http://www2.research.att.com/~bs'
+
+
+transformerClasses = loadTransformerClasses([
+   '/Users/eddy/Development/googleapp/sitebridgeclient/BasicTransformer.groovy',
+   '/Users/eddy/Development/googleapp/sitebridgeclient/BjarneTransformer.groovy'
+   ])
 
 // thread pool to execute anything asynchronously
 executor = Executors.newCachedThreadPool() //newFixedThreadPool(60)
@@ -36,10 +42,29 @@ def doit() {
             // get responses asynchronously
             def responses = requests.collect { request ->
                executor.submit({
+                  try {
+                  // prepare transformer
+                  def transformers = transformerClasses*.newInstance()
+                  transformers.each {
+                     it.binding = new Binding([
+                        bridge:[serverURL:serverURL, endpointURL:endpointURL],
+                        request:request.requestDetails
+                        ])
+                  }
+                  transformers*.run()
+
+                  transformers*.binding*.onRequest*.call()
                   println request
+
+
                   def response = fetchResponse(request)
+
+                  transformers*.binding*.response = response
+                  transformers*.binding*.onResponse*.call()
+
                   println "${response.status}\n${response.headers}"
                   return [responseIndex:request.requestIndex, responseDetails:response]
+                  } catch(ex) { ex.printStackTrace() }
                } as Callable<Object>)
             }
 
@@ -51,6 +76,11 @@ def doit() {
          Thread.currentThread().sleep(1000) 
       }
    }
+}
+
+def loadTransformerClasses(files) {
+   def classLoader = new GroovyClassLoader()
+   files.collect { classLoader.parseClass(it as File) }
 }
 
 def createHTTPBuilder(url) {
@@ -187,12 +217,7 @@ def fetchResponse(request) {
 
          // pass on the original request's headers
          headers.clear()
-         headers = request.requestDetails.headers.inject([:]) { m,e ->
-            if (e.key != 'Host') {
-               m[e.key] = e.value
-            }
-            return m
-         }
+         headers = request.requestDetails.headers
             
          // create response handler closure and configure for both success and failure
          def responseHandler = { resp ->

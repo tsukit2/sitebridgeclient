@@ -1,19 +1,21 @@
-@Grab(group='org.codehaus.groovy.modules.http-builder', module='http-builder', version='0.5.0-RC2' )
+@Grab(group='org.codehaus.groovy.modules.http-builder', module='http-builder', version='0.5.1' )
 
 import groovyx.net.http.*
 import static groovyx.net.http.ContentType.*
 import static groovyx.net.http.Method.*
 
 //def http = new HTTPBuilder( 'http://sitebridgeserver.appspot.com' )
-http = new HTTPBuilder( 'http://www.boost.org' )
-http.setProxy(System.properties.'http.proxyHost', 
-   System.properties.'http.proxyPort' as int, 
-   'http')
+http = new HTTPBuilder( 'http://www2.research.att.com/~bs' )
+if (System.properties.'http.proxyHost') {
+    http.setProxy(System.properties.'http.proxyHost', 
+       System.properties.'http.proxyPort' as int, 
+       'http')
+}
 
 http.request(GET) { req ->
-  //uri.path = '/articles.html'
+  uri.path = '/C++.html'
   
-  headers.clear()
+  //headers.clear()
   
   response.success = { resp ->
      //println resp.entity.content.getClass()

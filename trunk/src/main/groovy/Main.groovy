@@ -12,10 +12,10 @@ import java.util.concurrent.*
 
 //serverURL = 'http://localhost:8080'
 serverURL = 'http://sitebridgeserver.appspot.com'
-endpointURL = args.size() ? args[0] : 'http://www.w3.org'
+endpointURL = args.size() ? args[0] : 'http://www.oracle.com'
 
 // thread pool to execute anything asynchronously
-executor = Executors.newFixedThreadPool(40)
+executor = Executors.newCachedThreadPool() //newFixedThreadPool(60)
 
 try { 
    doit()
@@ -32,18 +32,20 @@ def doit() {
 
       // if request found, satisfy it
       if (requests) {
-         // get responses asynchronously
-         def responses = requests.collect { request ->
-            executor.submit({
-               println request
-               def response = fetchResponse(request)
-               println "${response.status}\n${response.headers}"
-               return [responseIndex:request.requestIndex, responseDetails:response]
-            } as Callable<Object>)
-         }
+         executor.submit( {
+            // get responses asynchronously
+            def responses = requests.collect { request ->
+               executor.submit({
+                  println request
+                  def response = fetchResponse(request)
+                  println "${response.status}\n${response.headers}"
+                  return [responseIndex:request.requestIndex, responseDetails:response]
+               } as Callable<Object>)
+            }
 
-         // get all the results (wait for it) and satisfy it
-         satisfy(responses.collect { it.get() })
+            // get all the results (wait for it) and satisfy it
+            satisfy(responses.collect { it.get() })
+         } as Runnable)
       } else {
          // wait a little bit if no request is found
          Thread.currentThread().sleep(1000) 

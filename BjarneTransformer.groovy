@@ -2,7 +2,10 @@ def endpoint = new URL(bridge.endpointURL)
 def server = new URL(bridge.serverURL)
 
 onRequest = {
-
+   // fix the path info for + symbol in the url
+   if (request.pathInfo?.contains(' ')) {
+      request.pathInfo = request.pathInfo.replaceAll(' ', '+')
+   }
 }
 
 onResponse = { 

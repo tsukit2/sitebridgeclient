@@ -15,10 +15,14 @@ serverURL = 'http://localhost:8080'
 endpointURL = args.size() ? args[0] : 'http://www2.research.att.com/~bs'
 
 
-transformerClasses = loadTransformerClasses([
-   '/Users/eddy/Development/googleapp/sitebridgeclient/BasicTransformer.groovy',
-   '/Users/eddy/Development/googleapp/sitebridgeclient/BjarneTransformer.groovy'
-   ])
+transformers = loadTransformers([
+   'BasicTransformer.groovy',
+   'BjarneTransformer.groovy',
+   //'C:/Personal/development/gaelyk/sitebridgeclient/BjarneTransformer.groovy'
+   //'/Users/eddy/Development/googleapp/sitebridgeclient/BasicTransformer.groovy',
+   //'/Users/eddy/Development/googleapp/sitebridgeclient/BjarneTransformer.groovy'
+   ],
+   [bridge:[serverURL:serverURL, endpointURL:endpointURL]])
 
 // thread pool to execute anything asynchronously
 executor = Executors.newCachedThreadPool() //newFixedThreadPool(60)
@@ -43,27 +47,31 @@ def doit() {
             def responses = requests.collect { request ->
                executor.submit({
                   try {
-                  // prepare transformer
-                  def transformers = transformerClasses*.newInstance()
-                  transformers.each {
-                     it.binding = new Binding([
+                     // delegate for handlers
+                     def delegate = [
                         bridge:[serverURL:serverURL, endpointURL:endpointURL],
                         request:request.requestDetails
-                        ])
-                  }
-                  transformers*.run()
+                        ]
 
-                  transformers*.binding*.onRequest*.call()
-                  println request
+                     // get onRequest handlers and call it
+                     def onRequestHandlers = transformers*.onRequest*.clone()
+                     onRequestHandlers*.delegate = delegate
+                     onRequestHandlers*.call()
 
+                     println request
 
-                  def response = fetchResponse(request)
+                     // fetch the response and add to the delegate
+                     def response = fetchResponse(request)
+                     delegate.response = response
 
-                  transformers*.binding*.response = response
-                  transformers*.binding*.onResponse*.call()
+                     // get onResponse handlers and call it
+                     def onResponseHandlers = transformers*.onResponse*.clone()
+                     onResponseHandlers*.delegate = delegate
+                     onResponseHandlers*.call()
 
-                  println "${response.status}\n${response.headers}"
-                  return [responseIndex:request.requestIndex, responseDetails:response]
+                     // return the response
+                     println "${response.status}\n${response.headers}"
+                     return [responseIndex:request.requestIndex, responseDetails:response]
                   } catch(ex) { ex.printStackTrace() }
                } as Callable<Object>)
             }
@@ -78,9 +86,12 @@ def doit() {
    }
 }
 
-def loadTransformerClasses(files) {
-   def classLoader = new GroovyClassLoader()
-   files.collect { classLoader.parseClass(it as File) }
+def loadTransformers(files, initBindingMap) {
+   def shell = new GroovyShell()
+   def scripts = files.collect { shell.parse(it as File) }
+   scripts.each { it.binding = new Binding(initBindingMap.clone()) }
+   scripts*.run()
+   return scripts*.binding
 }
 
 def createHTTPBuilder(url) {

@@ -12,14 +12,14 @@ onRequest = {
 
 
 onResponse = { 
-   // if it's redirect, make sure the location stay with the bridge server
-   if (response.status == 301) {
-      response.headers['Location'] = response.headers['Location'].replace(endpoint.host, 
-         "${server.host}${server.port != 80 ? ':' + server.port : ''}")
+   // if it's redirect, make sure the location stay with the bridge server and do no more processing
+   if ([301,302].any { response.status == it}) {
+      response.headers['Location'] = response.headers['Location'].replace(bridge.endpointURL, bridge.serverURL)
+      return
    }
 
    // if content type is text/html, make sure to replace all host appears to 
-   if (response.headers['Content-Type'].startsWith('text/html')) {
+   if (response.headers['Content-Type']?.startsWith('text/html')) {
       def matcher = response.headers['Content-Type'] =~ /charset=(\S+)/
       def charset = matcher ? matcher[0][1] : 'UTF-8'
       def text = new String(response.bodyBytes, charset)

@@ -8,6 +8,7 @@ import static groovyx.net.http.ContentType.JSON as HTTPJSON
 import static groovyx.net.http.Method.*
 import java.util.zip.*
 import org.apache.http.client.RedirectHandler
+import org.apache.http.message.* 
 import java.util.concurrent.*
 
 serverURL = 'http://localhost:8080'
@@ -17,7 +18,7 @@ endpointURL = args.size() ? args[0] : 'http://www2.research.att.com/~bs'
 
 transformers = loadTransformers([
    'BasicTransformer.groovy',
-   'BjarneTransformer.groovy',
+   'WFTransformer.groovy',
    //'C:/Personal/development/gaelyk/sitebridgeclient/BjarneTransformer.groovy'
    //'/Users/eddy/Development/googleapp/sitebridgeclient/BasicTransformer.groovy',
    //'/Users/eddy/Development/googleapp/sitebridgeclient/BjarneTransformer.groovy'
@@ -64,13 +65,14 @@ def doit() {
                      def response = fetchResponse(request)
                      delegate.response = response
 
+                     println "${response.status}\n${response.headers}"
+
                      // get onResponse handlers and call it
                      def onResponseHandlers = transformers*.onResponse*.clone()
                      onResponseHandlers*.delegate = delegate
                      onResponseHandlers*.call()
 
                      // return the response
-                     println "${response.status}\n${response.headers}"
                      return [responseIndex:request.requestIndex, responseDetails:response]
                   } catch(ex) { ex.printStackTrace() }
                } as Callable<Object>)
@@ -211,25 +213,40 @@ private convertToMapAndArray(jsonObj) {
   }
 }
 
-def fetchResponse(request) {
+def fetchResponse(requestObj) {
    print "Fetch response...."
    connectToEndPoint { endpoint ->
-      endpoint.request(groovyx.net.http.Method."${request.requestDetails.method}") { req ->
+      endpoint.request(groovyx.net.http.Method."${requestObj.requestDetails.method}") { req ->
          // set the path to match the math info
-         if (request.requestDetails.pathInfo) {
-            println "pathInfo = ${request.requestDetails.pathInfo}"
-            uri.path = request.requestDetails.pathInfo
+         if (requestObj.requestDetails.pathInfo) {
+            println "pathInfo = ${requestObj.requestDetails.pathInfo}"
+            uri.path = requestObj.requestDetails.pathInfo
          }
          
          // set query string if any
-         if (request.requestDetails.query) {
-            uri.query = request.requestDetails.query
+         if (requestObj.requestDetails.query) {
+            uri.query = requestObj.requestDetails.query
          }
 
-         // pass on the original request's headers
+         // pass on the original request's headers. We need to merge the value first
+         // because headers can be duplicate and HttpBuilder doesn't support
+         // that notion
+         /*
          headers.clear()
-         headers = request.requestDetails.headers
-            
+         headers = requestObj.requestDetails.headers.inject([:] { m,e ->
+            m[e.key] = e.value.join(';') 
+            return m
+         }
+         */
+         headers.clear()
+         requestObj.requestDetails.headers.each { k,v ->
+            if (v instanceof List) {
+               v.each { request.addHeader(new BasicHeader(k, it)) }
+            } else {
+               request.addHeader(new BasicHeader(k, v))
+            }
+         }
+
          // create response handler closure and configure for both success and failure
          def responseHandler = { resp ->
             // finally return the result
@@ -241,7 +258,10 @@ def fetchResponse(request) {
                        if (h.name == 'Content-Length' && (val as long) != bytes.size()) {
                           val = bytes.size().toString()
                        }
-                       m[h.name] = val;
+                       def existingValue = m[h.name]
+                       m[h.name] = (existingValue != null 
+                          ? (m[h.name] instanceof List ? existingValue << val : [existingValue, val])
+                          : val)
                        return m 
                     },
                     bodyBytes:bytes]

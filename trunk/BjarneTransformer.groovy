@@ -10,7 +10,7 @@ onRequest = {
 
 onResponse = { 
    // if content type is text/html, make sure to replace all host appears to 
-   if (response.headers['Content-Type'].startsWith('text/html')) {
+   if (response.headers['Content-Type']?.startsWith('text/html')) {
       def matcher = response.headers['Content-Type'] =~ /charset=(\S+)/
       def charset = matcher ? matcher[0][1] : 'UTF-8'
       def text = new String(response.bodyBytes, charset)

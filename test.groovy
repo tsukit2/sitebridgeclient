@@ -5,7 +5,7 @@ import static groovyx.net.http.ContentType.*
 import static groovyx.net.http.Method.*
 
 //def http = new HTTPBuilder( 'http://sitebridgeserver.appspot.com' )
-http = new HTTPBuilder( 'http://www2.research.att.com/~bs' )
+http = new HTTPBuilder( 'https://www.wf.com' )
 if (System.properties.'http.proxyHost') {
     http.setProxy(System.properties.'http.proxyHost', 
        System.properties.'http.proxyPort' as int, 
@@ -13,18 +13,13 @@ if (System.properties.'http.proxyHost') {
 }
 
 http.request(GET) { req ->
-  uri.path = '/C++.html'
+  //uri.path = '/C++.html'
   
   //headers.clear()
   
   response.success = { resp ->
      //println resp.entity.content.getClass()
-     System.out << resp.allHeaders.inject([:]) { m,h -> 
-                       if (h.name != 'Content-Encoding') {
-                          m[h.name] = h.value;
-                       } 
-                       return m 
-                    }
+     System.out << resp.allHeaders.inject([:]) { m,h -> m[h.name] = h.value; m } 
      System.out << resp.entity.content.text
   }
 }

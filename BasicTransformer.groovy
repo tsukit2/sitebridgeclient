@@ -4,10 +4,12 @@ def server = new URL(bridge.serverURL)
 onRequest = { 
    // transform Host header from the bridge to the actual endpoint
    if (request.headers['Host']) {
-      println "Transform host from ${request.headers['Host']} to ${endpoint.host}"
       request.headers['Host'] = endpoint.host
    }
 
+   if (request.headers['Referer']) {
+      request.headers['Referer'] = request.headers['Referer'].replace(bridge.endpointURL, bridge.serverURL)
+   }
 }
 
 

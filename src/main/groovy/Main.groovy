@@ -228,6 +228,17 @@ def fetchResponse(requestObj) {
             uri.query = requestObj.requestDetails.query
          }
 
+         // set body if params are given
+         if (requestObj.requestDetails.params) {
+            /*
+            // we need to convert to empty string because of the bug in httpbuilder
+            def nullToEmptyStrMap = new HashMap(requestObj.requestDetails.params)
+            nullToEmptyStrMap.each { e -> if (e.value == null) e.value = '' }
+            */
+            requestContentType = URLENC 
+            body = requestObj.requestDetails.params
+         }
+
          // pass on the original request's headers. We need to merge the value first
          // because headers can be duplicate and HttpBuilder doesn't support
          // that notion
@@ -240,10 +251,12 @@ def fetchResponse(requestObj) {
          */
          headers.clear()
          requestObj.requestDetails.headers.each { k,v ->
-            if (v instanceof List) {
-               v.each { request.addHeader(new BasicHeader(k, it)) }
-            } else {
-               request.addHeader(new BasicHeader(k, v))
+            if (k != 'Content-Length') {
+               if (v instanceof List) {
+                  v.each { request.addHeader(new BasicHeader(k, it)) }
+               } else {
+                  request.addHeader(new BasicHeader(k, v))
+               }
             }
          }
 

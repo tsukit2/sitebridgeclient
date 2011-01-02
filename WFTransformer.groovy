@@ -21,12 +21,13 @@ onResponse = {
 transformCookie = { cookie ->
    switch(cookie) {
       case ~/MBASESSIONID.*/:
+      case ~/SIMS.*/:
          return (server.protocol.toLowerCase() == 'https' 
             ? cookie
-            : cookie.split(';').findAll { it.trim() != 'secure' }.join(';') + ';')
+            : cookie.split(';').findAll { it.trim() != 'secure' }.join(';'))
 
       case ~/mba_cookie_prod.*/:
-         return cookie.split(';').findAll { !it.trim().startsWith('domain') }.join(';') + ';'
+         return cookie.split(';').findAll { !it.trim().startsWith('domain') }.join(';')
          //return cookie.replaceAll(/domain=\S*/, "domain=.${server.host}") 
 
       default:

@@ -71,6 +71,7 @@ class Controller {
                               // here is the steps to process each request
                               def tctx = transformers.transformRequest(request)
                               def response = bridge.fetchResponse(request)
+                              log.info "Response status: ${response.responseDetails.status}"
                               transformers.transformResponse(tctx, response)
                               return response
                            } catch(ex) { ex.printStackTrace(); log.error ex }

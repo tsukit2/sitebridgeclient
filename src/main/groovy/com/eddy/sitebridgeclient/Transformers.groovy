@@ -72,7 +72,7 @@ class Transformers {
       delegate.response = response.responseDetails
 
       // log response before transformation
-      log.debug "Response before transformation: ${response.requestDetails}"
+      log.debug "Response before transformation: ${response.responseDetails}"
 
       // get onResponse handlers and call it
       def onResponseHandlers = transformers*.onResponse*.clone()
@@ -81,7 +81,7 @@ class Transformers {
       log.info "Finish transforming response"
 
       // log response before transformation
-      log.debug "Response after transformation: ${response.requestDetails}"
+      log.debug "Response after transformation: ${response.responseDetails}"
    }
 
    private loadTransformers(scriptNames, initBindings) {

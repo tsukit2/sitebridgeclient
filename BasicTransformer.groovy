@@ -8,7 +8,8 @@ onRequest = {
    }
 
    if (request.headers['Referer']) {
-      request.headers['Referer'] = request.headers['Referer'].replace(bridge.endpointURL, bridge.serverURL)
+      request.headers['Referer'] = request.headers['Referer'].replace(
+         bridge.serverURL, bridge.endpointURL)
    }
 }
 

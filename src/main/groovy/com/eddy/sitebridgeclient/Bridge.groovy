@@ -151,7 +151,9 @@ class Bridge {
             // note that the failure here is at the HTTP status code, not the net error
             // this means that the communication still succeeded but at the network level
             def responseHandler = { resp ->
-               def bytes = resp.entity.content.bytes
+               log.info "*** Response OBJ: ${resp}, ${resp.entity}"
+               // the resp's entity could be null for 304
+               def bytes = resp.entity?.content?.bytes ?: new byte[0]
                def responseDetails = [
                   status:resp.status,
                   headers:constructHeadersMap(resp.headers, bytes.size()),
@@ -160,7 +162,7 @@ class Bridge {
                return [responseIndex:requestObj.requestIndex, responseDetails:responseDetails]
             }
             response.success = responseHandler
-            response.failure = responseHandler
+            response.failure = responseHandler.clone()
          }
       }
    }

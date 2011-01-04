@@ -46,7 +46,11 @@ class Transformers {
       ]
 
       // log request before transformation
-      log.debug "Request before transformation: ${request.requestDetails}"
+      /*
+      log.debug "Request before transformation: " +
+                "status: ${request.requestDetails.status}, " +
+                "headers: ${request.requestDetails.headers} "
+                */
 
       // get onRequest handlers and call it
       def onRequestHandlers = transformers*.onRequest*.clone()
@@ -55,7 +59,11 @@ class Transformers {
       log.info "Finish transforming request"
 
       // log request after transformation
-      log.debug "Request after transformation: ${request.requestDetails}"
+      log.debug "Request after transformation: " +
+                "pathInfo: ${request.requestDetails.pathInfo}, " +
+                "query: ${request.requestDetails.query}, " +
+                "params: ${request.requestDetails.params}, " +
+                "headers: ${request.requestDetails.headers} "
 
       // return the delegate used here as the context
       return delegate
@@ -72,7 +80,11 @@ class Transformers {
       delegate.response = response.responseDetails
 
       // log response before transformation
-      log.debug "Response before transformation: ${response.responseDetails}"
+      /*
+      log.debug "Response before transformation: " +
+                "status: ${response.responsetDetails.status}, " +
+                "headers: ${response.responseDetails.headers} "
+                */
 
       // get onResponse handlers and call it
       def onResponseHandlers = transformers*.onResponse*.clone()
@@ -81,7 +93,9 @@ class Transformers {
       log.info "Finish transforming response"
 
       // log response before transformation
-      log.debug "Response after transformation: ${response.responseDetails}"
+      log.debug "Response after transformation: " +
+                "status: ${response.responseDetails.status}, " +
+                "headers: ${response.responseDetails.headers} "
    }
 
    private loadTransformers(scriptNames, initBindings) {

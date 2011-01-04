@@ -74,7 +74,9 @@ class Controller {
                               log.info "Response status: ${response.responseDetails.status}"
                               transformers.transformResponse(tctx, response)
                               return response
-                           } catch(ex) { ex.printStackTrace(); log.error ex }
+                           } catch(Throwable ex) { 
+                              log.error "Request Processing Exception: ${request.requestDetails.pathInfo}", ex 
+                           }
                         } as Callable<Object>)
                      }
 
@@ -88,7 +90,11 @@ class Controller {
                   Thread.currentThread().sleep(1000) 
                }
             }
-         } catch(ex) { ex.printStackTrace(); log.error ex }
+         } catch(Throwable ex) { 
+            // if main loop got problem, log error and shutdown
+            log.error "Main Loop Exception", ex 
+            finish()
+         }
       } as Runnable)
    }
 
@@ -98,25 +104,28 @@ class Controller {
     * the process.
     */
    void startWarmingUp() {
-      // this is how to perform it
-      def warmup = { msg,times ->
-         def queue = (1..times).collect {
-            executor.submit({ bridge.warmup() } as Runnable)
-         }
-         queue.each { it.get() }
-         log.info msg
-      }
-
-      // now the real thing
       executor.submit( {
          try {
-            2.times { warmup("Kick off server #${it}", 40) }
+            2.times { doWarmUp("Kick off server #${it}", 40) }
             while(!done) {
-               warmup("Keep server warm", 5)
+               doWarmUp("Keep server warm", 5)
             }
-         } catch (ex) { log.error ex }
+         } catch(ex) { 
+            // if main loop got problem, log error and shutdown
+            log.error ex 
+            finish()
+         }
       } as Runnable)
    }
+
+   private doWarmUp(msg, times) {
+      def queue = (1..times).collect {
+         executor.submit({ bridge.warmup() } as Runnable)
+      }
+      queue.each { it.get() }
+      log.info msg
+   }
+
 
    /**
     * Finish this controller. Call this method to stop the controller after starting

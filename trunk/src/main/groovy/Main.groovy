@@ -26,7 +26,7 @@ switch (args[0]) {
 
 def warmup() {
    // check parameters
-   if (args.size() <= 2) {
+   if (args.size() < 2) {
       println "ERROR: Please specify the URL for the bridge site"
       System.exit(1)
    }

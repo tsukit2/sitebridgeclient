@@ -7,6 +7,7 @@ class Controller {
    private static Logger log = Logger.getLogger(this.name)
    private bridge
    private transformers
+   private reporter
    private executor
    private done = false
 
@@ -24,6 +25,7 @@ class Controller {
       // create all components needed
       bridge = new Bridge(serverURL, endpointURL)
       transformers = new Transformers(transformerScripts, serverURL, endpointURL)
+      reporter = new Reporter(reportOutputDir)
       executor = Executors.newCachedThreadPool()
    }
 
@@ -69,10 +71,16 @@ class Controller {
                         executor.submit({
                            try {
                               // here is the steps to process each request
+                              def report = reporter.startNewReport()
+                              reporter.reportOriginalRequest(report, request)
                               def tctx = transformers.transformRequest(request)
+                              reporter.reportFinalRequest(report, request)
                               def response = bridge.fetchResponse(request)
+                              reporter.reportOriginalResponse(report, response)
                               log.info "Response status: ${response.responseDetails.status}"
                               transformers.transformResponse(tctx, response)
+                              reporter.reportFinalResponse(report, response)
+                              reporter.finishReport(report)
                               return response
                            } catch(Throwable ex) { 
                               log.error "Request Processing Exception: ${request.requestDetails.pathInfo}", ex 

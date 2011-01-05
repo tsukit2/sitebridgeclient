@@ -64,6 +64,10 @@ class Controller {
                   // allows the main loop to go and fetch more request from the bridge
                   executor.submit( {
                      def futureResponses = requests.collect { request ->
+                        // start generate here before spawning a new thread to fetch the response
+                        // this is to ensure the proper ordering
+                        def report = reporter.startNewReport()
+
                         // and now for each request, we also fetch the response asynchronousely.
                         // each thread will leave future so that the thread that's handling 
                         // the request set will be able to synchronize with all indepdently fetched
@@ -71,7 +75,6 @@ class Controller {
                         executor.submit({
                            try {
                               // here is the steps to process each request
-                              def report = reporter.startNewReport()
                               reporter.reportOriginalRequest(report, request)
                               def tctx = transformers.transformRequest(request)
                               reporter.reportFinalRequest(report, request)

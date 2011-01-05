@@ -1,6 +1,7 @@
 package com.eddy.sitebridgeclient
 
 import net.sf.json.*
+import groovy.text.*
 
 /**
  * Provide reporting service. This class handles the report creation and generation. 
@@ -85,6 +86,71 @@ class Reporter {
    void finishReport(Map report) {
       def reportFile = new File(baseDir, "report-${report.id}.json")
       reportFile.setText(report.data.toString(3), 'UTF8')
+   }
+
+   void generateReport(Integer limit) {
+      // loads up all the files
+      def allfiles = []
+      baseDir.eachFileMatch(~/.*\.json$/) { allfiles << it }
+      allfiles.sort({ a,b -> b.compareTo(a) })
+
+      // limit the result if necessary
+      if (limit != null) {
+         allfiles = allfiles[0..<limit]
+      }
+
+      // if there is still files left, generate the files
+      if (allfiles) {
+         generateHTMLReport(allfiles)
+      }
+   }
+
+   private generateHTMLReport(allfiles) {
+      // create html folder for output files
+      def htmlFolder = new File(baseDir, 'html')
+      if(!htmlFolder.mkdir()) {
+         throw new IOException("Cannot create folder: ${htmlFolder}")
+      }
+
+      // define template to use
+      def template = new SimpleTemplateEngine().createTemplate(
+'''
+<html>
+   <title>SiteBridge Report</title>
+   <body>
+      <h1>SiteBridge Report<h1>
+      <h3>Generated on ${new Date()}</h3>
+      <br/>
+
+      <table>
+         <th>
+            <td>Timestamp</td>
+            <td>Path</td>
+            <td>Status<td>
+            <td>Request</td>
+            <td>Response</td>
+            <td>Unbridged Response</td>
+            <td>Unbridged Response</td>
+         </th>
+         <% allfiles.each { file -> %>
+            <%=generateHTMLReportRow(htmlFolder, file)%>
+         <% } %>
+      </table>
+   </body>
+</html>
+'''
+
+      // now generate the report
+      new File(htmlFolder, 'index.html').text = 
+         template.make([
+            htmlFolder:htmlFolder,
+            allfiles:allfiles,
+            generateHTMLReportRow:this.&generateHTMLReportRow]).toString()
+   }
+
+   private generateHTMLReportRow(htmlFolder, file) {
+
+
    }
 }
 

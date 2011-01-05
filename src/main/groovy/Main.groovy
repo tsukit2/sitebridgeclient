@@ -13,9 +13,12 @@ if (args.size() == 0) {
    println "   <endpointURL> <serverURL> [<transformation script>*]"
    println "Alternative:"
    println "   warmup <serverURL>"
-   println "   report [<# requests to go back - default 30>]"
+   println "   report [<# requests to go back - default all requests>]"
    System.exit(1)
 }
+
+// for now hardcode report dir
+reportDir = './data'
 
 // now determine what to do
 switch (args[0]) {
@@ -44,8 +47,14 @@ def warmup() {
 }
 
 def report() {
-   println "Report"
+   // get the number of requests
+   def requestNum = null
+   if (args.size() >= 2) {
+      requestNum = new Integer(args[1])
+   }
 
+   def reporter = new Reporter(reportDir)
+   reporter.generateReport(requestNum)
 }
 
 def bridge() {
@@ -59,7 +68,7 @@ def bridge() {
    def endpointURL = args[0]
    def serverURL = args[1]
    def transformerScripts = args[2..<args.size()]
-   def controller = new Controller(serverURL, endpointURL, transformerScripts, './data')
+   def controller = new Controller(serverURL, endpointURL, transformerScripts, reportDir)
    println "Bridging..."
    controller.startBridging()
 

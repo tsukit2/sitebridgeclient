@@ -65,8 +65,8 @@ class Bridge {
          http.request(GET,HTTPJSON) { req ->
             uri.path = '/bridgeconsole/query'
             response.success = { resp, json ->
-               def requests = convertToMapAndArray(
-                  JSONArray.fromObject(inflateByteArrayToObj(convertToMapAndArray(json.payload) as byte[])))
+               def requests = MiscUtility.convertToMapAndArray(
+                  JSONArray.fromObject(MiscUtility.inflateByteArrayToObj(MiscUtility.convertToMapAndArray(json.payload) as byte[])))
                if (requests) {
                   log.info "Query server found ${requests.size()} request(s)"
                   return requests
@@ -87,7 +87,7 @@ class Bridge {
       connectToServer { http ->
          http.request(POST,HTTPJSON) { req ->
             uri.path = '/bridgeconsole/satisfy'
-            body = [payload:deflateObjectToByteArray(
+            body = [payload:MiscUtility.deflateObjectToByteArray(
                               JSONArray.fromObject(responses).toString())]
             response.success = { resp, json ->
                if (!json.satisfied) {
@@ -228,33 +228,5 @@ class Bridge {
       } finally {
          endpoint.shutdown()
       }
-   }
-
-   private deflateObjectToByteArray(obj) {
-      def bytes = new ByteArrayOutputStream()
-      def outstream = new ObjectOutputStream(new GZIPOutputStream(bytes))
-      outstream.writeObject(obj)
-      outstream.close()
-      bytes.toByteArray()
-   }
-
-   private inflateByteArrayToObj(bytearray) {
-      return new ObjectInputStream(
-         new GZIPInputStream(new ByteArrayInputStream(bytearray))).readObject()
-
-   }
-
-   // utility method to convert json object to map and array
-   private convertToMapAndArray(jsonObj) {
-     switch(jsonObj) {
-        case List: 
-           return jsonObj.inject([]) { l, elem -> l << convertToMapAndArray(elem); l }
-        case Map:  
-           return jsonObj.inject([:]) { m, entry -> m[entry.key] = convertToMapAndArray(entry.value); m }
-        case JSONNull:
-           return null
-        default:   
-           return jsonObj
-     }
    }
 }

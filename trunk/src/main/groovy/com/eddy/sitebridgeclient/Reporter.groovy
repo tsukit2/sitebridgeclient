@@ -2,6 +2,7 @@ package com.eddy.sitebridgeclient
 
 import net.sf.json.*
 import groovy.text.*
+import groovy.xml.MarkupBuilder 
 
 /**
  * Provide reporting service. This class handles the report creation and generation. 
@@ -20,10 +21,8 @@ class Reporter {
    Reporter(String reportDir) {
       // create base director if it doesn't exist
       this.baseDir = new File(reportDir)
-      if (!baseDir.exists()) {
-         if (!baseDir.mkdirs()) {
-            throw new IOException("Cannot create report directory: ${reportDir}")
-         }
+      if (!baseDir.exists() && !baseDir.mkdirs()) {
+         throw new IOException("Cannot create report directory: ${reportDir}")
       }
    }
 
@@ -34,7 +33,7 @@ class Reporter {
     * @return a Map representing a report.
     */
    Map startNewReport() {
-      return [data:new JSONObject(), id:System.nanoTime()]
+      return new JSONObject([data:new JSONObject(), id:System.nanoTime(), timestamp:new Date()])
    }
 
    /**
@@ -85,7 +84,7 @@ class Reporter {
     */
    void finishReport(Map report) {
       def reportFile = new File(baseDir, "report-${report.id}.json")
-      reportFile.setText(report.data.toString(3), 'UTF8')
+      reportFile.setText(report.toString(3), 'UTF8')
    }
 
    void generateReport(Integer limit) {
@@ -108,49 +107,198 @@ class Reporter {
    private generateHTMLReport(allfiles) {
       // create html folder for output files
       def htmlFolder = new File(baseDir, 'html')
-      if(!htmlFolder.mkdir()) {
-         throw new IOException("Cannot create folder: ${htmlFolder}")
+      if(!htmlFolder.exists() && !htmlFolder.mkdir()) {
+         throw new IOException("Cannot create report folder: ${htmlFolder}")
       }
 
-      // define template to use
-      def template = new SimpleTemplateEngine().createTemplate(
-'''
-<html>
-   <title>SiteBridge Report</title>
-   <body>
-      <h1>SiteBridge Report<h1>
-      <h3>Generated on ${new Date()}</h3>
-      <br/>
-
-      <table>
-         <th>
-            <td>Timestamp</td>
-            <td>Path</td>
-            <td>Status<td>
-            <td>Request</td>
-            <td>Response</td>
-            <td>Unbridged Response</td>
-            <td>Unbridged Response</td>
-         </th>
-         <% allfiles.each { file -> %>
-            <%=generateHTMLReportRow(htmlFolder, file)%>
-         <% } %>
-      </table>
-   </body>
-</html>
-'''
-
-      // now generate the report
-      new File(htmlFolder, 'index.html').text = 
-         template.make([
-            htmlFolder:htmlFolder,
-            allfiles:allfiles,
-            generateHTMLReportRow:this.&generateHTMLReportRow]).toString()
+      // create the report
+      new File(htmlFolder, 'index.html').newPrintWriter('utf8').withPrintWriter { writer ->
+         def builder = new MarkupBuilder(writer)
+         builder.html {
+            head {
+               title "Site Bridge Report"
+            }
+            body {
+               h1 "Sitebridge Report"
+               h3 "Generated on ${new Date()}"
+               hr()
+               table {
+                  th {
+                     td 'Timestamp'
+                     td 'Method'
+                     td 'Path'
+                     td 'Status'
+                     td 'Request'
+                     td 'Response'
+                     td 'Unbridged Response'
+                     td 'Unbridged Response'
+                  }
+                  allfiles.each { file ->
+                     def report = MiscUtility.convertToMapAndArray(JSONObject.fromObject(file.text))
+                     tr {
+                        def path = report.data.finalRequest.requestDetails.pathInfo ?: '&nbsp;'
+                        td report.timestamp
+                        td report.data.finalRequest.requestDetails.method
+                        td path
+                        td report.data.finalRequest.requestDetails.status
+                        td { 
+                           a(href:createRequestPage("Request: ${path}", path, htmlFolder, report, 'finalRequest'),
+                             target:'_blank') {
+                              builder.yield 'details'
+                           }
+                        }
+                        td { 
+                           a(href:createResponsePage('Response: ${path}', htmlFolder, report, 'finalResponse'),
+                             target:'_blank') {
+                              builder.yield 'details'
+                           }
+                        }
+                        td { 
+                           a(href:createRequestPage("Unbridged Request: ${path}", path, htmlFolder, report, 'originalRequest'),
+                             target:'_blank') {
+                              builder.yield 'details'
+                           }
+                        }
+                        td { 
+                           a(href:createResponsePage("Unbridged Response: ${path}", htmlFolder, report, 'originalResponse'),
+                             target:'_blank') {
+                              builder.yield 'details'
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
    }
 
-   private generateHTMLReportRow(htmlFolder, file) {
+   private createRequestPage(pageTitle, path, htmlFolder, report, what) {
+      // create the report
+      def request = report.data[what].requestDetails
+      def file = new File(htmlFolder, "${report.id}-${what}.html")
+      file.newPrintWriter('utf8').withPrintWriter { writer ->
+         def builder = new MarkupBuilder(writer)
+         builder.html {
+            head {
+               title "Site Bridge Report - ${pageTitle}"
+            }
+            body {
+               h1 pageTitle
+               hr()
+               table {
+                  th {
+                     td 'Timestamp'
+                     td 'Method'
+                     td 'Path'
+                     td 'URL Params'
+                     td 'Body Params'
+                     td 'Headers'
+                     td 'Body'
+                  }
+                  tr {
+                     td report.timestamp
+                     td request.method
+                     td path
+                     td {
+                        request.query?.each { q ->
+                           p "${q.name}: ${q.value}"
+                        }
+                        builder.yield '&nbsp;'
+                     }
+                     td {
+                        request.params?.each { p ->
+                           p "${p.name}: ${p.value}"
+                        }
+                        builder.yield '&nbsp;'
+                     }
+                     td {
+                        request.headers?.each { h ->
+                           if (h.value != null && h.value instanceof List) {
+                              h.value.each { v ->
+                                 p "${h.key}: ${v}"
+                              }
+                           } else {
+                              p "${h.key}: ${h.value}"
+                           }
+                        }
+                        builder.yield '&nbsp;'
+                     }
+                     td {
+                        if (request.bodyBytes) {
+                           def bodyfile = new File(htmlFolder, "${report.id}-${what}-body.raw")
+                           bodyfile << MiscUtility.convertIntegerListToByteArray(request.bodyBytes)
+                           a(href:bodyfile.toURL(), type:request.headers.'Content-Type', target:'_blank') {
+                              builder.yield 'content'
+                           }
+                        } else {
+                           builder.yield '&nbsp;'
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
 
+      // return the url for this file
+      return file.toURL()
+   }
 
+   private createResponsePage(pageTitle, htmlFolder, report, what) {
+      // create the report
+      def response = report.data[what].responseDetails
+      def file = new File(htmlFolder, "${report.id}-${what}.html")
+      file.newPrintWriter('utf8').withPrintWriter { writer ->
+         def builder = new MarkupBuilder(writer)
+         builder.html {
+            head {
+               title "Site Bridge Report - ${pageTitle}"
+            }
+            body {
+               h1 pageTitle
+               hr()
+               table {
+                  th {
+                     td 'Timestamp'
+                     td 'Status'
+                     td 'Headers'
+                     td 'Body'
+                  }
+                  tr {
+                     td report.timestamp
+                     td response.status
+                     td {
+                        response.headers?.each { h ->
+                           if (h.value != null && h.value instanceof List) {
+                              h.value.each { v ->
+                                 p "${h.key}: ${v}"
+                              }
+                           } else {
+                              p "${h.key}: ${h.value}"
+                           }
+                        }
+                        builder.yield '&nbsp;'
+                     }
+                     td {
+                        if (response.bodyBytes) {
+                           def bodyfile = new File(htmlFolder, "${report.id}-${what}-body.raw")
+                           bodyfile << MiscUtility.convertIntegerListToByteArray(response.bodyBytes)
+                           a(href:bodyfile.toURL(), type:response.headers.'Content-Type', target:'_blank') {
+                              builder.yield 'content'
+                           }
+                        } else {
+                           builder.yield '&nbsp;'
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
+
+      // return the url for this file
+      return file.toURL()
    }
 }
 

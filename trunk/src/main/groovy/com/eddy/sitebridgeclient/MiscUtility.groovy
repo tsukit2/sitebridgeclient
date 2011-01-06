@@ -58,6 +58,13 @@ class MiscUtility {
      }
    }
 
+   /**
+    * Convert the given list of integer into a byte array. 
+    *
+    * @param list                Any type of list object containing integers.
+    *
+    * @return byte[] object.
+    */
    static convertIntegerListToByteArray(List list) {
       def bytearray = new byte[list.size()]
       list.eachWithIndex { v,i -> bytearray[i] = v }

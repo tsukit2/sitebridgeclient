@@ -33,7 +33,7 @@ class Reporter {
     * @return a Map representing a report.
     */
    Map startNewReport() {
-      return new JSONObject([data:new JSONObject(), id:System.nanoTime(), timestamp:new Date()])
+      return new JSONObject([data:new JSONObject(), id:System.nanoTime(), timestamp:System.currentTimeMillis()])
    }
 
    /**
@@ -91,11 +91,11 @@ class Reporter {
       // loads up all the files
       def allfiles = []
       baseDir.eachFileMatch(~/.*\.json$/) { allfiles << it }
-      allfiles.sort({ a,b -> b.compareTo(a) })
+      allfiles.sort()
 
       // limit the result if necessary
       if (limit != null) {
-         allfiles = allfiles[0..<limit]
+         allfiles = allfiles ?: allfiles[-(Math.min(limit,allfiles.size()))..-1] 
       }
 
       // if there is still files left, generate the files
@@ -122,25 +122,28 @@ class Reporter {
                h1 "Sitebridge Report"
                h3 "Generated on ${new Date()}"
                hr()
-               table {
-                  th {
-                     td 'Timestamp'
-                     td 'Method'
-                     td 'Path'
-                     td 'Status'
-                     td 'Request'
-                     td 'Response'
-                     td 'Unbridged Response'
-                     td 'Unbridged Response'
+               table(border:1) {
+                  tr {
+                     th '#'
+                     th 'Timestamp'
+                     th 'Method'
+                     th 'Path'
+                     th 'Status'
+                     th 'Request'
+                     th 'Response'
+                     th 'Unbridged Response'
+                     th 'Unbridged Response'
                   }
-                  allfiles.each { file ->
+                  allfiles.eachWithIndex { file, index ->
                      def report = MiscUtility.convertToMapAndArray(JSONObject.fromObject(file.text))
+                     report.timestamp = new Date(report.timestamp) // convert from long to date
                      tr {
-                        def path = report.data.finalRequest.requestDetails.pathInfo ?: '&nbsp;'
+                        def path = report.data.finalRequest.requestDetails.pathInfo ?: '/'
+                        td index + 1
                         td report.timestamp
                         td report.data.finalRequest.requestDetails.method
                         td path
-                        td report.data.finalRequest.requestDetails.status
+                        td report.data.originalResponse.responseDetails.status
                         td { 
                            a(href:createRequestPage("Request: ${path}", path, htmlFolder, report, 'finalRequest'),
                              target:'_blank') {
@@ -148,7 +151,7 @@ class Reporter {
                            }
                         }
                         td { 
-                           a(href:createResponsePage('Response: ${path}', htmlFolder, report, 'finalResponse'),
+                           a(href:createResponsePage("Response: ${path}", htmlFolder, report, 'finalResponse'),
                              target:'_blank') {
                               builder.yield 'details'
                            }
@@ -186,32 +189,43 @@ class Reporter {
             body {
                h1 pageTitle
                hr()
-               table {
-                  th {
-                     td 'Timestamp'
-                     td 'Method'
-                     td 'Path'
-                     td 'URL Params'
-                     td 'Body Params'
-                     td 'Headers'
-                     td 'Body'
+               table(border:1) {
+                  tr {
+                     th 'What'
+                     th 'Data'
                   }
                   tr {
+                     td 'Timestamp'
                      td report.timestamp
+                  }
+                  tr {
+                     td 'Method'
                      td request.method
+                  }
+                  tr {
+                     td 'Path'
                      td path
+                  }
+                  tr {
+                     td 'URL Params'
                      td {
                         request.query?.each { q ->
                            p "${q.name}: ${q.value}"
                         }
-                        builder.yield '&nbsp;'
+                        mkp.yieldUnescaped '&nbsp;'
                      }
+                  } 
+                  tr {
+                     td 'Body Params'
                      td {
                         request.params?.each { p ->
                            p "${p.name}: ${p.value}"
                         }
-                        builder.yield '&nbsp;'
+                        mkp.yieldUnescaped '&nbsp;'
                      }
+                  }
+                  tr {
+                     td 'Headers'
                      td {
                         request.headers?.each { h ->
                            if (h.value != null && h.value instanceof List) {
@@ -222,17 +236,21 @@ class Reporter {
                               p "${h.key}: ${h.value}"
                            }
                         }
-                        builder.yield '&nbsp;'
+                        mkp.yieldUnescaped '&nbsp;'
                      }
+                  }
+                  tr {
+                     td 'Body'
                      td {
                         if (request.bodyBytes) {
                            def bodyfile = new File(htmlFolder, "${report.id}-${what}-body.raw")
+                           bodyfile.delete()
                            bodyfile << MiscUtility.convertIntegerListToByteArray(request.bodyBytes)
                            a(href:bodyfile.toURL(), type:request.headers.'Content-Type', target:'_blank') {
                               builder.yield 'content'
                            }
                         } else {
-                           builder.yield '&nbsp;'
+                           mkp.yieldUnescaped '&nbsp;'
                         }
                      }
                   }
@@ -258,16 +276,21 @@ class Reporter {
             body {
                h1 pageTitle
                hr()
-               table {
-                  th {
-                     td 'Timestamp'
-                     td 'Status'
-                     td 'Headers'
-                     td 'Body'
+               table(border:1) {
+                  tr {
+                     th 'What'
+                     th 'Data'
                   }
                   tr {
+                     td 'Timestamp'
                      td report.timestamp
+                  }
+                  tr {
+                     td 'Status'
                      td response.status
+                  }
+                  tr {
+                     td 'Headers'
                      td {
                         response.headers?.each { h ->
                            if (h.value != null && h.value instanceof List) {
@@ -278,17 +301,21 @@ class Reporter {
                               p "${h.key}: ${h.value}"
                            }
                         }
-                        builder.yield '&nbsp;'
+                        mkp.yieldUnescaped '&nbsp;'
                      }
+                  }
+                  tr {
+                     td 'Body'
                      td {
                         if (response.bodyBytes) {
                            def bodyfile = new File(htmlFolder, "${report.id}-${what}-body.raw")
+                           bodyfile.delete()
                            bodyfile << MiscUtility.convertIntegerListToByteArray(response.bodyBytes)
                            a(href:bodyfile.toURL(), type:response.headers.'Content-Type', target:'_blank') {
                               builder.yield 'content'
                            }
                         } else {
-                           builder.yield '&nbsp;'
+                           mkp.yieldUnescaped '&nbsp;'
                         }
                      }
                   }

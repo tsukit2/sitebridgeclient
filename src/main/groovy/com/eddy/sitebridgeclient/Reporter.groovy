@@ -145,25 +145,25 @@ class Reporter {
                         td path
                         td report.data.originalResponse.responseDetails.status
                         td { 
-                           a(href:createRequestPage("Request: ${path}", path, htmlFolder, report, 'finalRequest'),
+                           a(href:createRequestPage("Bridge Request: ${path}", path, htmlFolder, report, 'finalRequest'),
                              target:'_blank') {
                               builder.yield 'details'
                            }
                         }
                         td { 
-                           a(href:createResponsePage("Response: ${path}", htmlFolder, report, 'finalResponse'),
+                           a(href:createResponsePage("Bridge Response: ${path}", htmlFolder, report, 'originalResponse'),
                              target:'_blank') {
                               builder.yield 'details'
                            }
                         }
                         td { 
-                           a(href:createRequestPage("Unbridged Request: ${path}", path, htmlFolder, report, 'originalRequest'),
+                           a(href:createRequestPage("Browser Request: ${path}", path, htmlFolder, report, 'originalRequest'),
                              target:'_blank') {
                               builder.yield 'details'
                            }
                         }
                         td { 
-                           a(href:createResponsePage("Unbridged Response: ${path}", htmlFolder, report, 'originalResponse'),
+                           a(href:createResponsePage("Browser Response: ${path}", htmlFolder, report, 'finalResponse'),
                              target:'_blank') {
                               builder.yield 'details'
                            }
@@ -210,7 +210,7 @@ class Reporter {
                      td 'URL Params'
                      td {
                         request.query?.each { q ->
-                           p "${q.name}: ${q.value}"
+                           p "${q.key}: ${q.value}"
                         }
                         mkp.yieldUnescaped '&nbsp;'
                      }
@@ -218,8 +218,8 @@ class Reporter {
                   tr {
                      td 'Body Params'
                      td {
-                        request.params?.each { p ->
-                           p "${p.name}: ${p.value}"
+                        request.params?.each { pr ->
+                           p "${pr.key}: ${pr.value}"
                         }
                         mkp.yieldUnescaped '&nbsp;'
                      }

@@ -4,7 +4,7 @@ def server = new URL(bridge.serverURL)
 onRequest = { 
    // transform Host header from the bridge to the actual endpoint
    if (request.headers['Host']) {
-      request.headers['Host'] = endpoint.host
+      request.headers['Host'] = "${endpoint.host}${endpoint.port != 80 ? ':' + endpoint.port : ''}"
    }
 
    if (request.headers['Referer']) {
@@ -17,7 +17,9 @@ onRequest = {
 onResponse = { 
    // if it's redirect, make sure the location stay with the bridge server and do no more processing
    if ([301,302].any { response.status == it}) {
+      def oldloc = response.headers['Location']
       response.headers['Location'] = response.headers['Location'].replace(bridge.endpointURL, bridge.serverURL)
+      println "Redirect: ${oldloc} to ${response.headers['Location']}"
       return
    }
 

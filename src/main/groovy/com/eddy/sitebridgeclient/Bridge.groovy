@@ -151,7 +151,7 @@ class Bridge {
             // note that the failure here is at the HTTP status code, not the net error
             // this means that the communication still succeeded but at the network level
             def responseHandler = { resp ->
-               log.info "*** Response OBJ: ${resp}, ${resp.entity}"
+               //log.info "*** Response OBJ: ${resp}, ${resp.entity}"
                // the resp's entity could be null for 304
                def bytes = resp.entity?.content?.bytes ?: new byte[0]
                def responseDetails = [
@@ -207,6 +207,30 @@ class Bridge {
                        System.properties.'http.proxyPort' as int, 
                        'http')
       }
+
+/*
+      def keyStore = KeyStore.getInstance( KeyStore.defaultType )
+
+      new File('C:/src/branches/M30.0-release/wireless/tomcat/conf/wftrust.jks').newInputStream().withStream {
+         keyStore.load( it, "wftrust".toCharArray() )
+      }
+
+      def factory = new SSLSocketFactory(keyStore)
+      factory.setHostnameVerifier([
+         verify: { Object[] params -> println "*** Verify hostname" }
+         ] as X509HostnameVerifier)
+         
+
+      http.client.connectionManager.schemeRegistry.register( new
+            Scheme("https", factory, 443) ) 
+
+      http.auth.certificate(
+         //new File('./localmba.ts').toURL().toString(), 
+         //'mobile')
+         new File('C:/src/branches/M30.0-release/wireless/tomcat/conf/wftrust.jks').toURL().toString(), 
+         'wftrust')
+         */
+
       return http
    }
 

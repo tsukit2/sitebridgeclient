@@ -4,9 +4,12 @@ import net.sf.json.*
 import net.sf.json.groovy.*;
 
 
-def data = [a:1, b:[2,4,5,6] as byte[]]
-def jsonstr = JSONObject.fromObject(data).toString()
-def data2 = JSONObject.fromObject(jsonstr)
+def j = new JSONObject([a:1, b:2])
+println j.toString()
 
-println jsonstr
-println data2
+println new File('abc').toURI()
+
+new URL('file:///C:/Personal/development/gaelyk/sitebridgeclient/abc')
+
+
+

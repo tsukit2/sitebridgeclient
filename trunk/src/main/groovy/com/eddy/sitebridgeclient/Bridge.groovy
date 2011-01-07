@@ -60,7 +60,7 @@ class Bridge {
     *
     * @return List of Map object, each indicating a seaparate request.
     */
-   List<Map> query() {
+   List query() {
       connectToServer { http ->
          http.request(GET,HTTPJSON) { req ->
             uri.path = '/bridgeconsole/query'
@@ -83,7 +83,7 @@ class Bridge {
     *
     * @param responses        List of Map object each indicating a response.
     */
-   void satisfy(List<Map> responses) {
+   void satisfy(List responses) {
       connectToServer { http ->
          http.request(POST,HTTPJSON) { req ->
             uri.path = '/bridgeconsole/satisfy'

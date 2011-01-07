@@ -20,7 +20,7 @@ class Controller {
     * @param transformerScripts  List of transformer script file names.
     * @param reportOutputDir     Directory name for the report output.
     */
-   Controller(String serverURL, String endpointURL, List<String> transformerScripts,
+   Controller(String serverURL, String endpointURL, List transformerScripts,
          String reportOutputDir) {
       // create all components needed
       bridge = new Bridge(serverURL, endpointURL)
@@ -88,7 +88,7 @@ class Controller {
                            } catch(Throwable ex) { 
                               log.error "Request Processing Exception: ${request.requestDetails.pathInfo}", ex 
                            }
-                        } as Callable<Object>)
+                        } as Callable)
                      }
 
                      // here is the sync point. we will wait until all requests are process

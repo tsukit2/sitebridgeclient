@@ -20,7 +20,7 @@ class Transformers {
     * @param serverURL           URL of the sitebridge server.
     * @param endpointURL         URL of the endpoint site to be bridged.
     */
-   Transformers(List<String> scriptNames, String serverURL, String endpointURL) {
+   Transformers(List scriptNames, String serverURL, String endpointURL) {
       // save off the two URL for later use
       this.serverURL = serverURL
       this.endpointURL = endpointURL

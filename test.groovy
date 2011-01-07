@@ -5,21 +5,23 @@ import static groovyx.net.http.ContentType.*
 import static groovyx.net.http.Method.*
 
 //def http = new HTTPBuilder( 'http://sitebridgeserver.appspot.com' )
-http = new HTTPBuilder( 'https://www.wf.com' )
+http = new HTTPBuilder( 'https://localhost:7002' )
+/*
 if (System.properties.'http.proxyHost') {
     http.setProxy(System.properties.'http.proxyHost', 
        System.properties.'http.proxyPort' as int, 
        'http')
 }
+*/
 
 http.request(GET) { req ->
-  //uri.path = '/C++.html'
+   uri.path = '/mba'
   
   //headers.clear()
   
   response.success = { resp ->
      //println resp.entity.content.getClass()
-     System.out << resp.allHeaders.inject([:]) { m,h -> m[h.name] = h.value; m } 
+     //System.out << resp.allHeaders.inject([:]) { m,h -> m[h.name] = h.value; m } 
      System.out << resp.entity.content.text
   }
 }

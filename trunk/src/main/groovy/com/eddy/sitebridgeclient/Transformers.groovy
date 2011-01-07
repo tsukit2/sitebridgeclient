@@ -99,7 +99,7 @@ class Transformers {
    }
 
    private loadTransformers(scriptNames, initBindings) {
-      def shell = new GroovyShell()
+      def shell = new GroovyShell(this.class.classLoader)
       def scripts = scriptNames.collect { shell.parse(it as File) }
       scripts.each { it.binding = new Binding(initBindings.clone()) }
       scripts*.run()

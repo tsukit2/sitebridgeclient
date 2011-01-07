@@ -95,7 +95,7 @@ class Reporter {
 
       // limit the result if necessary
       if (limit != null) {
-         allfiles = allfiles ?: allfiles[-(Math.min(limit,allfiles.size()))..-1] 
+         allfiles = allfiles ? allfiles[-(Math.min(limit,allfiles.size()))..-1] : allfiles
       }
 
       // if there is still files left, generate the files
@@ -129,10 +129,10 @@ class Reporter {
                      th 'Method'
                      th 'Path'
                      th 'Status'
-                     th 'Request'
-                     th 'Response'
-                     th 'Unbridged Response'
-                     th 'Unbridged Response'
+                     th 'Bridged Request'
+                     th 'Bridged Response'
+                     th 'Browser Request'
+                     th 'Browser Response'
                   }
                   allfiles.eachWithIndex { file, index ->
                      def report = MiscUtility.convertToMapAndArray(JSONObject.fromObject(file.text))

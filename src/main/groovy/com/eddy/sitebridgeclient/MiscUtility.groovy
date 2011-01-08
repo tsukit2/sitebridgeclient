@@ -70,5 +70,20 @@ class MiscUtility {
       list.eachWithIndex { v,i -> bytearray[i] = v }
       return bytearray
    }
+
+   /**
+    * Utility method helping parsing the hostname in RFC2732 format.
+    *
+    * @param rfc2732             Host name inf RFC 2732 format.
+    * 
+    * @return hostname which is either extracted portion or the origina value
+    *    if parsing fail.
+    */
+   static String parseHostnameRFC2732Format(String rfc2732) {
+      // extract only the host name and port. Either return extract
+      // portion or the original value
+      def match = (rfc2732 =~ /values:\[([^,]+),([^\]]*)]/)
+      return match ? "${match[0][1]}${match[0][2]}" : rfc2732
+   }
 }
 

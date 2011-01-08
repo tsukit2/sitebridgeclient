@@ -1,3 +1,5 @@
+import com.eddy.sitebridgeclient.*
+
 def endpoint = new URL(bridge.endpointURL)
 def server = new URL(bridge.serverURL)
 
@@ -14,7 +16,8 @@ onResponse = {
       def matcher = response.headers['Content-Type'] =~ /charset=(\S+)/
       def charset = matcher ? matcher[0][1] : 'UTF-8'
       def text = new String(response.bodyBytes, charset)
-      text = text.replaceAll('www.research.att.com', "${server.host}${server.port != 80 ? ':' + server.port : ''}")
+      text = text.replaceAll('www.research.att.com', 
+                             MiscUtility.parseHostnameRFC2732Format(server.host))
       response.bodyBytes = text.getBytes(charset)
    }
 }

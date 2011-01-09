@@ -1,11 +1,14 @@
 package com.eddy.sitebridgeclient
 
 import groovyx.net.http.*
-import org.apache.log4j.*
 import java.util.zip.*
 import net.sf.json.*
+import org.apache.http.impl.client.*
+import org.apache.commons.httpclient.*
+import org.apache.commons.httpclient.params.*
 import org.apache.http.client.RedirectHandler
 import org.apache.http.message.* 
+import org.apache.log4j.*
 import static groovyx.net.http.ContentType.*
 import static groovyx.net.http.ContentType.JSON as HTTPJSON
 import static groovyx.net.http.Method.*
@@ -19,15 +22,23 @@ class Bridge {
    private static Logger log = Logger.getLogger(this.name)
    private serverURL, endpointURL
 
+   private connectionManager
+
    /**
     * Constructor.
     *
     * @param serverURL           URL of the sitebridge server.
     * @param endpointURL         URL of the endpoint site to be bridged.
     */
-   Bridge(String serverURL, String endpointURL) {
+   Bridge(String serverURL, String endpointURL) throws Exception {
       this.serverURL = serverURL
       this.endpointURL = endpointURL
+
+      // configure connection manager
+      connectionManager = new MultiThreadedHttpConnectionManager()
+      connectionManager.params = new HttpConnectionManagerParams(
+         defaultMaxConnectionsPerHost: 50,
+         maxTotalConnections:100)
    }
 
    /**
@@ -176,6 +187,9 @@ class Bridge {
       connectToServer { http ->
          http.request(GET) { req ->
             uri.path = '/bridgeconsole/warmup'
+
+            response.success = { resp -> }
+            response.failure = { resp -> }
          }
       }
    }
@@ -201,36 +215,13 @@ class Bridge {
    }
 
    private createHTTPBuilder(url) {
-      def http = new HTTPBuilder(url)
+      def http = new MyHTTPBuilder(connectionManager, url)
+      //http.client.connectionManager = connectionManager
       if (!(url =~ /localhost/) && System.properties.'http.proxyHost') {
          http.setProxy(System.properties.'http.proxyHost', 
                        System.properties.'http.proxyPort' as int, 
                        'http')
       }
-
-/*
-      def keyStore = KeyStore.getInstance( KeyStore.defaultType )
-
-      new File('C:/src/branches/M30.0-release/wireless/tomcat/conf/wftrust.jks').newInputStream().withStream {
-         keyStore.load( it, "wftrust".toCharArray() )
-      }
-
-      def factory = new SSLSocketFactory(keyStore)
-      factory.setHostnameVerifier([
-         verify: { Object[] params -> println "*** Verify hostname" }
-         ] as X509HostnameVerifier)
-         
-
-      http.client.connectionManager.schemeRegistry.register( new
-            Scheme("https", factory, 443) ) 
-
-      http.auth.certificate(
-         //new File('./localmba.ts').toURL().toString(), 
-         //'mobile')
-         new File('C:/src/branches/M30.0-release/wireless/tomcat/conf/wftrust.jks').toURL().toString(), 
-         'wftrust')
-         */
-
       return http
    }
 
@@ -251,6 +242,20 @@ class Bridge {
          closure(endpoint)
       } finally {
          endpoint.shutdown()
+      }
+   }
+
+   private class MyHTTPBuilder extends HTTPBuilder {
+      private connectionManager
+
+      MyHTTPBuilder(connectionManager, url) {
+         super(url)
+         this.connectionManager = connectionManager
+      }
+
+      protected AbstractHttpClient createClient(HttpParams params) {
+         println '*********************** create client'
+         return new HttpClient(new HttpClientParams(params), connectionManager)   
       }
    }
 }

@@ -34,6 +34,11 @@ Generated from archetype; please customize.
          <version>0.5.1</version>
       </dependency>
       <dependency>
+         <groupId>commons-httpclient</groupId>
+         <artifactId>commons-httpclient</artifactId>
+         <version>3.1</version>
+      </dependency>
+      <dependency>
          <groupId>net.sf.json-lib</groupId>
          <artifactId>json-lib</artifactId>
          <version>2.3</version>
@@ -81,7 +86,7 @@ Generated from archetype; please customize.
             <executions>
                <execution>
                   <goals>
-                     <goal>generateStubs</goal>
+                     <!--<goal>generateStubs</goal>-->
                      <goal>compile</goal>
                      <goal>generateTestStubs</goal>
                      <goal>testCompile</goal>

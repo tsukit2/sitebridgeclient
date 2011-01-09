@@ -4,12 +4,15 @@ import net.sf.json.*
 import net.sf.json.groovy.*;
 
 
-def j = new JSONObject([a:1, b:2])
-println j.toString()
+def m = [d:new Date()]
+def j = JSONObject.fromObject(m)
+def s = j.toString()
+println s
+def m2 = JSONObject.fromObject(s)
+println m2.toString()
+println m2.getDate(
 
-println new File('abc').toURI()
-
-new URL('file:///C:/Personal/development/gaelyk/sitebridgeclient/abc')
 
 
-
+def a = [] //[1,2,3,4,5,6,7]
+println a[-0..-0]

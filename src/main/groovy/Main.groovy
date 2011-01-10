@@ -1,4 +1,4 @@
-//@Grab(group='org.codehaus.groovy.modules.http-builder', module='http-builder', version='0.5.1' )
+//@Grab(group='org.codehaus.groovy.modules.http-builder', module='http-builder', version='0.5.2' )
 //@Grab(group='net.sf.json-lib', module='json-lib', version='2.3', classifier='jdk15' )
 //@Grab(group='log4j', module='log4j', version='1.2.16')
 import com.eddy.sitebridgeclient.*

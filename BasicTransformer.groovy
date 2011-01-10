@@ -34,6 +34,7 @@ onResponse = {
          : transformCookie(cookieValue, sslToNormal))
    }
 
+   /*
    // if content type is text/html, make sure to replace all host appears to 
    if (response.headers['Content-Type']?.startsWith('text/html')) {
       def matcher = response.headers['Content-Type'] =~ /charset=(\S+)/
@@ -42,6 +43,7 @@ onResponse = {
       text = text.replaceAll(getHost(endpoint), getHost(server))
       response.bodyBytes = text.getBytes(charset)
    }
+   */
 }
 
 def transformCookie(cookie, sslToNormal) {

@@ -98,7 +98,7 @@ class Controller {
                   } as Runnable)
                } else {
                   // wait a little bit if no request is found
-                  Thread.currentThread().sleep(1000) 
+                  Thread.currentThread().sleep(500) 
                }
             }
          } catch(Throwable ex) { 
@@ -131,13 +131,21 @@ class Controller {
    }
 
    private doWarmUp(msg, times) {
-      /*
-      def queue = (1..times).collect {
-         executor.submit({ bridge.warmup() } as Runnable)
+      def queue = []
+      for (int x = 0; x < times; ++x) {
+         queue << executor.submit(new Runnable() { 
+            void run() {
+               bridge.warmup() 
+            }
+         })
       }
       queue.each { it.get() }
+      /*
+      def queue = (1..times).collect {
+         
+      }
       */
-      times.times { bridge.warmup() }
+      //times.times { bridge.warmup() }
       log.info msg
    }
 

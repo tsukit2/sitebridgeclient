@@ -22,8 +22,6 @@ class Bridge {
    private static Logger log = Logger.getLogger(this.name)
    private serverURL, endpointURL
 
-   private connectionManager
-
    /**
     * Constructor.
     *
@@ -33,12 +31,6 @@ class Bridge {
    Bridge(String serverURL, String endpointURL) throws Exception {
       this.serverURL = serverURL
       this.endpointURL = endpointURL
-
-      // configure connection manager
-      connectionManager = new MultiThreadedHttpConnectionManager()
-      connectionManager.params = new HttpConnectionManagerParams(
-         defaultMaxConnectionsPerHost: 50,
-         maxTotalConnections:100)
    }
 
    /**
@@ -185,11 +177,8 @@ class Bridge {
     */
    void warmup() {
       connectToServer { http ->
-         http.request(GET) { req ->
-            uri.path = '/bridgeconsole/warmup'
-
-            response.success = { resp -> }
-            response.failure = { resp -> }
+         http.get(path:'/bridgeconsole/warmup', contentType:ANY) { resp ->
+            // do nothing
          }
       }
    }
@@ -215,8 +204,7 @@ class Bridge {
    }
 
    private createHTTPBuilder(url) {
-      def http = new MyHTTPBuilder(connectionManager, url)
-      //http.client.connectionManager = connectionManager
+      def http = new HTTPBuilder(url)
       if (!(url =~ /localhost/) && System.properties.'http.proxyHost') {
          http.setProxy(System.properties.'http.proxyHost', 
                        System.properties.'http.proxyPort' as int, 
@@ -242,20 +230,6 @@ class Bridge {
          closure(endpoint)
       } finally {
          endpoint.shutdown()
-      }
-   }
-
-   private class MyHTTPBuilder extends HTTPBuilder {
-      private connectionManager
-
-      MyHTTPBuilder(connectionManager, url) {
-         super(url)
-         this.connectionManager = connectionManager
-      }
-
-      protected AbstractHttpClient createClient(HttpParams params) {
-         println '*********************** create client'
-         return new HttpClient(new HttpClientParams(params), connectionManager)   
       }
    }
 }

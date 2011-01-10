@@ -117,10 +117,10 @@ class Controller {
    void startWarmingUp() {
       executor.submit( {
          try {
-            //2.times { doWarmUp("Kick off server #${it}", 40) }
+            2.times { doWarmUp("Kick off server #${it}", 40) }
             while(!done) {
-               doWarmUp("Keep server warm", 40)
-               Thread.currentThread().sleep(30000) 
+               doWarmUp("Keep server warm", 20)
+               Thread.currentThread().sleep(15000) 
             }
          } catch(ex) { 
             // if main loop got problem, log error and shutdown

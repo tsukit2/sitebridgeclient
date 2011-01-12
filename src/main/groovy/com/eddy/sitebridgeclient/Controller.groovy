@@ -131,21 +131,10 @@ class Controller {
    }
 
    private doWarmUp(msg, times) {
-      def queue = []
-      for (int x = 0; x < times; ++x) {
-         queue << executor.submit(new Runnable() { 
-            void run() {
-               bridge.warmup() 
-            }
-         })
+      def queue = (1..times).collect {
+         executor.submit({ bridge.warmup() } as Runnable)
       }
       queue.each { it.get() }
-      /*
-      def queue = (1..times).collect {
-         
-      }
-      */
-      //times.times { bridge.warmup() }
       log.info msg
    }
 

@@ -65,11 +65,11 @@ class Bridge {
     */
    List query() {
       connectToServer { http ->
-         http.request(GET,HTTPJSON) { req ->
+         http.request(GET) { req ->
             uri.path = '/bridgeconsole/query'
-            response.success = { resp, json ->
+            response.success = { resp ->
                def requests = MiscUtility.convertToMapAndArray(
-                  JSONArray.fromObject(MiscUtility.inflateByteArrayToObj(MiscUtility.convertToMapAndArray(json.payload) as byte[])))
+                  JSONArray.fromObject(MiscUtility.inflateByteArrayToObj(resp.entity.content.bytes)))
                if (requests) {
                   log.info "Query server found ${requests.size()} request(s)"
                   return requests
@@ -90,8 +90,8 @@ class Bridge {
       connectToServer { http ->
          http.request(POST,HTTPJSON) { req ->
             uri.path = '/bridgeconsole/satisfy'
-            body = [payload:MiscUtility.deflateObjectToByteArray(
-                              JSONArray.fromObject(responses).toString())]
+            requestContentType = 'application/octet-stream'
+            body = MiscUtility.deflateObjectToByteArray(JSONArray.fromObject(responses).toString())
             response.success = { resp, json ->
                if (!json.satisfied) {
                   log.error "Satisfying requests: ${responses*.responseIndex} failed: ${json.satisfied}"

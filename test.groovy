@@ -4,6 +4,16 @@ import groovyx.net.http.*
 import static groovyx.net.http.ContentType.*
 import static groovyx.net.http.Method.*
 
+
+def uri = new groovyx.net.http.URIBuilder( 'http://localhost?a=1' )
+println uri.query.a
+
+println (null << 'f')
+
+
+
+
+
 //def http = new HTTPBuilder( 'http://sitebridgeserver.appspot.com' )
 http = new HTTPBuilder( 'https://localhost:7002' )
 /*

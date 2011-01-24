@@ -246,7 +246,9 @@ class Reporter {
                            def bodyfile = new File(htmlFolder, "${report.id}-${what}-body.raw")
                            bodyfile.delete()
                            bodyfile << MiscUtility.convertIntegerListToByteArray(request.bodyBytes)
-                           a(href:bodyfile.toURL(), type:request.headers.'Content-Type', target:'_blank') {
+                           a(href:bodyfile.name, 
+                             type:request.headers.'Content-Type'?.startsWith('text') ? 'text/plain' : request.headers.'Content-Type', 
+                             target:'_blank') {
                               builder.yield 'content'
                            }
                         } else {
@@ -260,7 +262,7 @@ class Reporter {
       }
 
       // return the url for this file
-      return file.toURL()
+      return file.name
    }
 
    private createResponsePage(pageTitle, htmlFolder, report, what) {
@@ -311,7 +313,9 @@ class Reporter {
                            def bodyfile = new File(htmlFolder, "${report.id}-${what}-body.raw")
                            bodyfile.delete()
                            bodyfile << MiscUtility.convertIntegerListToByteArray(response.bodyBytes)
-                           a(href:bodyfile.toURL(), type:response.headers.'Content-Type', target:'_blank') {
+                           a(href:bodyfile.name, 
+                             type:response.headers.'Content-Type'?.startsWith('text') ? 'text/plain' : response.headers.'Content-Type', 
+                             target:'_blank') {
                               builder.yield 'content'
                            }
                         } else {
@@ -325,7 +329,7 @@ class Reporter {
       }
 
       // return the url for this file
-      return file.toURL()
+      return file.name
    }
 }
 

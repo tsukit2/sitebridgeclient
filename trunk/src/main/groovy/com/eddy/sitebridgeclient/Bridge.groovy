@@ -147,9 +147,11 @@ class Bridge {
                // it will blow things up
                if (k != 'Content-Length') {
                   if (v instanceof List) {
-                     v.each { request.addHeader(new BasicHeader(k, it)) }
+                     headers[k] = v.join(',')
+                     //v.each { request.addHeader(new BasicHeader(k, it)) }
                   } else {
-                     request.addHeader(new BasicHeader(k, v))
+                     headers[k] = v
+                     //request.addHeader(new BasicHeader(k, v))
                   }
                }
             }

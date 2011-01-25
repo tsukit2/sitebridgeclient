@@ -137,6 +137,10 @@ class Bridge {
             // times. The facility provided by HTTPBuilder treats it as map which doesn't
             // support this notion
             headers.clear()
+            request.allHeaders.each {
+               println "Removing Header: ${it.name} = ${it.value}"
+               request.removeHeader(it)
+            }
             requestObj.requestDetails.headers.each { k,v ->
                // note that we don't include Content-Length header. This is because
                // HTTPBuilder will take care of this. If we set the original Content-Length,

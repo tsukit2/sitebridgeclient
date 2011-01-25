@@ -7,12 +7,14 @@ def sslToNormal =
 
 onRequest = { 
    // transform Host header from the bridge to the actual endpoint
-   if (request.headers['Host']) {
-      request.headers['Host'] = getHost(endpoint)
+   def hostKey = MiscUtility.getHeaderKeyLike(request.headers, 'Host')
+   if (hostKey) {
+      request.headers[hostKey] = getHost(endpoint)
    }
 
-   if (request.headers['Referer']) {
-      request.headers['Referer'] = request.headers['Referer'].replace(
+   def refererKey = MiscUtility.getHeaderKeyLike(request.headers, 'Referer')
+   if (refererKey) {
+      request.headers[refererKey] = request.headers[refererKey].replace(
          bridge.serverURL, bridge.endpointURL)
    }
 }
@@ -21,22 +23,25 @@ onRequest = {
 onResponse = { 
    // if it's redirect, make sure the location stay with the bridge server 
    if ([301,302].any { response.status == it}) {
-      def oldloc = response.headers['Location']
-      response.headers['Location'] = response.headers['Location'].replace(bridge.endpointURL, bridge.serverURL)
-      println "Redirect: ${oldloc} to ${response.headers['Location']}"
+      def locKey = MiscUtility.getHeaderKeyLike(response.headers, 'Location')
+      def oldloc = response.headers[locKey]
+      response.headers[locKey] = response.headers[locKey].replace(bridge.endpointURL, bridge.serverURL)
+      println "Redirect: ${oldloc} to ${response.headers[locKey]}"
    }
 
    // transform cookie
-   if (response.headers['Set-Cookie']) {
-      def cookieValue = response.headers['Set-Cookie']
-      response.headers['Set-Cookie'] = (cookieValue instanceof List 
+   def cookieKey = MiscUtility.getHeaderKeyLike(response.headers, 'Set-Cookie')
+   if (cookieKey) {
+      def cookieValue = response.headers[cookieKey]
+      response.headers[cookieKey] = (cookieValue instanceof List 
          ? cookieValue.collect { transformCookie(it, sslToNormal) }
          : transformCookie(cookieValue, sslToNormal))
    }
 
    // if content type is text/html, make sure to replace all host appears to 
-   if (response.headers['Content-Type']?.startsWith('text')) {
-      def matcher = response.headers['Content-Type'] =~ /charset=(\S+)/
+   def contentKey = MiscUtility.getHeaderKeyLike(response.headers, 'Content-Type')
+   if (contentKey && response.headers[contentKey]?.startsWith('text')) {
+      def matcher = response.headers[contentKey] =~ /charset=(\S+)/
       def charset = matcher ? matcher[0][1] : 'UTF-8'
       def text = new String(response.bodyBytes, charset)
       text = text.replaceAll(getHost(endpoint), getHost(server))

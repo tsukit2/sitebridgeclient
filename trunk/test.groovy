@@ -3,19 +3,10 @@
 import groovyx.net.http.*
 import static groovyx.net.http.ContentType.*
 import static groovyx.net.http.Method.*
-
-
-def uri = new groovyx.net.http.URIBuilder( 'http://localhost?a=1' )
-println uri.query.a
-
-println (null << 'f')
-
-
-
-
+import org.apache.http.client.params.*
 
 //def http = new HTTPBuilder( 'http://sitebridgeserver.appspot.com' )
-http = new HTTPBuilder( 'https://localhost:7002' )
+http = new HTTPBuilder( 'http://localhost:8080' )
 /*
 if (System.properties.'http.proxyHost') {
     http.setProxy(System.properties.'http.proxyHost', 
@@ -24,11 +15,31 @@ if (System.properties.'http.proxyHost') {
 }
 */
 
+//println http.client.params.getParameter(ClientPNames.DEFAULT_HEADERS)
+http.client.params.setParameter(ClientPNames.DEFAULT_HEADERS, [])
+http.headers = null
+
+http.client.removeRequestInterceptorByClass(ContentEncoding.RequestInterceptor)
+//http.client.removeResponseInterceptorByClass(ContentEncoding.ResponseInterceptor)
+
+
 http.request(GET) { req ->
-   uri.path = '/mba'
+   uri.path = '/test/sitebridge/index'
   
-  //headers.clear()
-  
+  headers.clear()
+  headers['Host'] = 'flflf'
+  headers['Accept'] = null
+//  headers['Connection'] = 'ddl'
+  //headers['Accept-Encoding'] = 'normal'
+  request.removeHeaders('accept')
+  println request.allHeaders
+            request.headerIterator().each {
+               println "Removing Header: ${it.name} = ${it.value}"
+               request.removeHeaders(it)
+            }
+  println request.params.getParameter('accept')
+  request.params = new org.apache.http.params.BasicHttpParams()
+    
   response.success = { resp ->
      //println resp.entity.content.getClass()
      //System.out << resp.allHeaders.inject([:]) { m,h -> m[h.name] = h.value; m } 

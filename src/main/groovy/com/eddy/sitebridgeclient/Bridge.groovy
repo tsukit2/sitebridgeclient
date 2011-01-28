@@ -137,10 +137,8 @@ class Bridge {
             // times. The facility provided by HTTPBuilder treats it as map which doesn't
             // support this notion
             headers.clear()
-            request.allHeaders.each {
-               println "Removing Header: ${it.name} = ${it.value}"
-               request.removeHeader(it)
-            }
+            headers['Accept'] = null // remove it. it's fine if it's later set back
+            request.allHeaders.each { request.removeHeader(it) }
             requestObj.requestDetails.headers.each { k,v ->
                // note that we don't include Content-Length header. This is because
                // HTTPBuilder will take care of this. If we set the original Content-Length,
@@ -155,6 +153,7 @@ class Bridge {
                   }
                }
             }
+            headers['Connection'] = 'close' // we always override this because we never keep it alive
 
             // create response handler closure and configure for both success and failure
             // note that the failure here is at the HTTP status code, not the net error
@@ -232,6 +231,7 @@ class Bridge {
    private connectToEndPoint(closure) {
       def endpoint = createHTTPBuilder(endpointURL)
       endpoint.client.redirectHandler = [isRedirectRequested: { resp, ctx -> false }] as RedirectHandler
+      endpoint.client.removeRequestInterceptorByClass(ContentEncoding.RequestInterceptor)
       try {
          closure(endpoint)
       } finally {

@@ -145,7 +145,7 @@ class Bridge {
                // note that we don't include Content-Length header. This is because
                // HTTPBuilder will take care of this. If we set the original Content-Length,
                // it will blow things up
-               if (k != 'Content-Length') {
+               if (k.toLowerCase() != 'content-length') {
                   if (v instanceof List) {
                      headers[k] = v.join(',')
                      //v.each { request.addHeader(new BasicHeader(k, it)) }
@@ -192,20 +192,20 @@ class Bridge {
    private constructHeadersMap(headers, bytesSize) {
       headers.inject([:]) { m,h -> 
          def val = h.value
-            // First, it seems like HTTPBuilder has a bug that returns wrong 
-            // Content-Length. So we need to check with the actual body bytes
-            // and correct it
-            if (h.name == 'Content-Length' && (val as long) != bytesSize) {
-               val = bytesSize.toString()
-            }
+         // First, it seems like HTTPBuilder has a bug that returns wrong 
+         // Content-Length. So we need to check with the actual body bytes
+         // and correct it
+         if (h.name.toLowerCase() == 'content-length' && (val as long) != bytesSize) {
+            val = bytesSize.toString()
+         }
 
          // we create list of header if we found the same header multiple
          // times. This is unfortunately the nature of HTTP protocol
          def existingValue = m[h.name]
-            m[h.name] = (existingValue != null 
-                  ? (m[h.name] instanceof List ? existingValue << val : [existingValue, val])
-                  : val)
-            return m 
+         m[h.name] = (existingValue != null 
+               ? (m[h.name] instanceof List ? existingValue << val : [existingValue, val])
+               : val)
+         return m 
       }
    }
 

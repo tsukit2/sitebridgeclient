@@ -15,15 +15,16 @@ class Controller {
     * Bridge Constructor. This is the full form constructor. Use this to initiate 
     * the bridge operation.
     * 
+    * @param restricted          Flag whether SiteBrite should restrict access.
     * @param serverURL           URL to the bridge server.
     * @param endpointURL         URL to the endpoint site.
     * @param transformerScripts  List of transformer script file names.
     * @param reportOutputDir     Directory name for the report output.
     */
-   Controller(String serverURL, String endpointURL, List transformerScripts,
+   Controller(boolean restricted, String serverURL, String endpointURL, List transformerScripts,
          String reportOutputDir) {
       // create all components needed
-      bridge = new Bridge(serverURL, endpointURL)
+      bridge = new Bridge(restricted, serverURL, endpointURL)
       transformers = new Transformers(transformerScripts, serverURL, endpointURL)
       reporter = new Reporter(reportOutputDir)
       executor = Executors.newCachedThreadPool()
@@ -36,7 +37,7 @@ class Controller {
     * @param serverURL           URL to the bridge server.
     */
    Controller(String serverURL) {
-      bridge = new Bridge(serverURL, null)
+      bridge = new Bridge(false, serverURL, null)
       executor = Executors.newCachedThreadPool()
    }
 

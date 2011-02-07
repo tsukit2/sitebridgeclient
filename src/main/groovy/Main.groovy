@@ -10,7 +10,7 @@ PropertyConfigurator.configure('log4j.properties');
 // show usage if the parameters are not given
 if (args.size() == 0) {
    println "Main Usage:"
-   println "   <serverURL> <endpointURL> [<transformation script>*]"
+   println "   [--restricted] <serverURL> <endpointURL> [<transformation script>*]"
    println "Alternative:"
    println "   warmup <serverURL>"
    println "   report [<# requests to go back - default all requests>]"
@@ -65,10 +65,16 @@ def bridge() {
    }
 
    // if reach here, extract the parameters and start bridging
-   def serverURL = args[0]
-   def endpointURL = args[1]
-   def transformerScripts = args[2..<args.size()]
-   def controller = new Controller(serverURL, endpointURL, transformerScripts, reportDir)
+   def index = 0
+   def restricted = false
+   if (args[index] == '--restricted') {
+      restricted = true
+      ++index
+   }
+   def serverURL = args[index++]
+   def endpointURL = args[index++]
+   def transformerScripts = args[index..<args.size()]
+   def controller = new Controller(restricted, serverURL, endpointURL, transformerScripts, reportDir)
    println "Bridging..."
    controller.startBridging()
 

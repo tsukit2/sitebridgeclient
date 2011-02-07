@@ -21,14 +21,17 @@ import static groovyx.net.http.Method.*
 class Bridge {
    private static Logger log = Logger.getLogger(this.name)
    private serverURL, endpointURL
+   private restricted
 
    /**
     * Constructor.
     *
+    * @param restricted          Flag whether SiteBrite should restrict access.
     * @param serverURL           URL of the sitebridge server.
     * @param endpointURL         URL of the endpoint site to be bridged.
     */
-   Bridge(String serverURL, String endpointURL) throws Exception {
+   Bridge(boolean restricted, String serverURL, String endpointURL) throws Exception {
+      this.restricted = restricted
       this.serverURL = serverURL
       this.endpointURL = endpointURL
    }
@@ -42,6 +45,9 @@ class Bridge {
       connectToServer { http ->
          http.request(GET,HTTPJSON) { req ->
             uri.path = '/bridgeconsole/reset'
+            if (restricted) {
+               uri.query = [restricted:true]
+            }
             response.success = { resp, json ->
                // if we get response, make sure we see good status
                if (!json.status) {
@@ -49,8 +55,14 @@ class Bridge {
                   throw new RuntimeException("Server reset failed: ${json.status}")
                }
 
+               // rerestricted, check the generated passcode
+               if (restricted && !json.bridgePasscode) {
+                  log.error "No bridge passcode found for restricted mode"
+                  throw new RuntimeException("Server reset failed: no bridgePasscode found")
+               }
+
                // if reach here things are good
-               log.info 'Reset server succeeded'
+               log.info "Reset server succeeded ${restricted ? 'bridgePasscode = ' + json.bridgePasscode : ''}"
             }
          }
       }

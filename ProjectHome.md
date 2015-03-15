@@ -1,0 +1,1 @@
+This is the client program of SiteBridge open-source project. Please see [SiteBridgeserver](http://code.google.com/p/sitebridgeserver/) for details.
